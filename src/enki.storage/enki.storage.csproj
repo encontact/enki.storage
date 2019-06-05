@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp2.1;</TargetFrameworks>
-    <AssemblyName>encontact.storage.lib</AssemblyName>
-    <RootNamespace>encontact.storage.lib</RootNamespace>
+    <AssemblyName>enki.storage</AssemblyName>
+    <RootNamespace>enki.storage</RootNamespace>
     <!-- Impede quebra do projeto por Downgrade de bibliotecas. -->
     <NoWarn>$(NoWarn);NU1605</NoWarn>
   </PropertyGroup>
