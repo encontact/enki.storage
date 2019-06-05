@@ -1,0 +1,61 @@
+pipeline {
+    agent { label 'dotnetcore' }
+    environment {
+        DOTNET_CLI_HOME = '/home/jenkins'
+    }
+    options { 
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        timeout(time: 1, unit: 'HOURS')
+    }
+    stages {
+        // stage ('Get Latest Code') {
+        //     steps {
+        //         git url: 'https://github.com/encontact/enki.common.git'
+        //     }
+        // }
+        stage('Build') {
+            steps {
+                echo 'Building..'
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+                sh 'dotnet build -c Release'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+                sh 'dotnet test test/enki.storage.test/enki.storage.integration.test.csproj'
+            }
+        }
+        stage('Publish') {
+            steps {
+                echo 'Deploying....'
+                sh 'dotnet publish src/enki.storage/enki.storage.csproj -c Release -o out/Release/'
+            }
+        }
+        stage('Package') {
+            when {
+                branch 'master'  
+            }
+            steps {
+                echo 'Deploying nupkg....'
+                sh 'dotnet pack -c Release -o out/Release/'
+                // sh 'dotnet nuget push enki.common.core.1.0.0.nupkg -k ${env.NUGET_KEY} -s https://api.nuget.org/v3/index.json'
+            }
+        }
+        stage('Generate Artifact') {
+            steps {
+                echo 'Zipping....'
+                sh 'zip -r enki.storage.zip src/enki.storage/out/Release/'
+            }
+        }
+    }
+    post {
+        success {
+            archiveArtifacts 'enki.storage.zip'
+            echo 'Build concluido com sucesso.'
+        }
+        failure {
+            echo 'Erro ao processar o build.'
+        }
+    }
+}
