@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B6EC8CAD-C84F-4C09-A26B-33401800CF79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "enki.storage", "src\encontact.storage\enki.storage.csproj", "{967C059C-62BA-4C77-978B-54AF4303F58E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "enki.storage", "src\enki.storage\enki.storage.csproj", "{967C059C-62BA-4C77-978B-54AF4303F58E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{3A55ECDC-B1C8-4FE4-BBCB-895C33C24556}"
 EndProject
