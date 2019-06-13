@@ -143,6 +143,15 @@ namespace enki.storage.Model
         }
 
         /// <summary>
+        /// Recupera estatisticas do objecto solicitado.
+        /// </summary>
+        /// <param name="bucketName">Nome do bucket</param>
+        /// <param name="objectName">Nome do objeto</param>
+        /// <returns>Recupera as informações do objeto.</returns>
+        public override async Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName)
+            => new ObjectInfo(await StatObjectAsync(bucketName, objectName).ConfigureAwait(false));
+
+        /// <summary>
         /// Valida se um objeto existe ou não no balde.
         /// Se o arquivo não existir no servidor, será retornada uma Exception.
         /// </summary>

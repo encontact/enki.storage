@@ -1,28 +1,48 @@
 ﻿using enki.storage.Interface;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using System;
 
 namespace enki.storage.integration.test.TesteStorage
 {
+    public enum StorageType
+    {
+        Minio,
+        S3
+    }
+
     public static class StorageTestConfig
     {
-        public static IStorageServerConfig GetMinioConfig() => new StorageConfigTest
+        public static IStorageServerConfig GetAppsettingsConfig(StorageType type)
         {
-            EndPoint = "localhost:9000",
-            AccessKey = "dev",
-            SecretKey = "secret-dev-test",
-            Secure = false,
-            DefaultBucket = "enki.storage.test-minio-us-east-1",
-            Region = "us-east-1"
-        };
+            var config = new ConfigurationBuilder()
+                 .AddJsonFile($"config/appsettings.json", optional: true, reloadOnChange: true)
+                 .AddJsonFile($"config/appsettings.{EnvironmentName.Development}.json", optional: true, reloadOnChange: true)
+                 .Build();
 
-        public static IStorageServerConfig GetS3Config() => new StorageConfigTest
-        {
-            EndPoint = "s3.amazonaws.com",
-            AccessKey = "KEY",
-            SecretKey = "SECRET",
-            Secure = false,
-            DefaultBucket = "enki.storage.test-s3-us-east-1",
-            Region = "us-east-1"
-        };
+            if (type == StorageType.S3)
+            {
+                return new StorageConfigTest
+                {
+                    EndPoint = config["S3:EndPoint"],
+                    AccessKey = config["S3:AccessKey"],
+                    SecretKey = config["S3:SecretKey"],
+                    Secure = Convert.ToBoolean(config["S3:Secure"]),
+                    DefaultBucket = config["S3:DefaultBucket"],
+                    Region = config["S3:Region"]
+                };
+            }
+
+            return new StorageConfigTest
+            {
+                EndPoint = config["Minio:EndPoint"],
+                AccessKey = config["Minio:AccessKey"],
+                SecretKey = config["Minio:SecretKey"],
+                Secure = Convert.ToBoolean(config["Minio:Secure"]),
+                DefaultBucket = config["Minio:DefaultBucket"],
+                Region = config["Minio:Region"]
+            };
+        }
     }
 
     public class StorageConfigTest : IStorageServerConfig

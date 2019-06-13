@@ -20,6 +20,7 @@ namespace enki.storage.Interface
         Task<bool> ObjectExistAsync(string bucketName, string objectName);
         Task GetObjectAsync(string bucketName, string objectName, Action<Stream> action);
         Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName);
+        Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName);
         Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null);
         Task SetCorsToBucketAsync(string bucketName, string allowedOrigin);
     }

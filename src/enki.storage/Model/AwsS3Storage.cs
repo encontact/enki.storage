@@ -121,6 +121,28 @@ namespace enki.storage.Model
         }
 
         /// <summary>
+        /// Recupera estatisticas do objecto solicitado.
+        /// </summary>
+        /// <param name="bucketName">Nome do bucket</param>
+        /// <param name="objectName">Nome do objeto</param>
+        /// <returns>Recupera as informações do objeto.</returns>
+        public override async Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName)
+            => new ObjectInfo(objectName, await StatObjectAsync(bucketName, objectName).ConfigureAwait(false));
+
+        /// <summary>
+        /// Valida se um objeto existe ou não no balde.
+        /// Se o arquivo não existir no servidor, será retornada uma Exception.
+        /// </summary>
+        /// <param name="bucketName">Nome do balde</param>
+        /// <param name="objectName">Nome do objeto</param>
+        /// <returns>Tarefa com o status do objeto.</returns>
+        public async Task<GetObjectMetadataResponse> StatObjectAsync(string bucketName, string objectName)
+        {
+            ValidateInstance();
+            return await _client.GetObjectMetadataAsync(bucketName, objectName).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Efetua a criação de uma URL temporária para upload de anexo sem depender de autenticação.
         /// Util para performar os uploads tanto de anexos como de imagens no corpo efetuadas pela plataforma.
         /// </summary>

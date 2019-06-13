@@ -11,7 +11,7 @@ namespace enki.storage.integration.test.TesteStorage
     public class MinioStorageTest
     {
         private IStorageServerConfig _config { get; set; }
-        public MinioStorageTest() => _config = StorageTestConfig.GetMinioConfig();
+        public MinioStorageTest() => _config = StorageTestConfig.GetAppsettingsConfig(StorageType.Minio);
 
         [Fact]
         public async Task NotFoundBucketExistsAsyncTest()
@@ -274,6 +274,53 @@ namespace enki.storage.integration.test.TesteStorage
                 Assert.True(await client.ObjectExistAsync(bucket, destBucketObject).ConfigureAwait(false));
                 await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
                 await client.RemoveObjectAsync(bucket, destBucketObject).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, e.Message);
+                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task GetObjectInfoAsyncTest()
+        {
+            var client = new MinioStorage(_config);
+            var bucketObject = "test/SimpleFile.txt";
+            var bucket = _config.DefaultBucket + "-stat-object";
+            try
+            {
+                // Prepare
+                client.Connect();
+                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+                {
+                    await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
+                }
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+
+                // Test
+                var data = await client.GetObjectInfoAsync(bucket, bucketObject).ConfigureAwait(false);
+                Assert.NotNull(data);
+                Assert.Equal("bfece62529a41e4f0c16cd72c81ab8ba", data.ETag);
+                Assert.Equal("text/plain", data.ContentType);
+                Assert.Equal(DateTime.MaxValue, data.Expires);
+                Assert.Equal(DateTime.Now.Year, data.LastModified.Year);
+                Assert.Equal(DateTime.Now.Month, data.LastModified.Month);
+                Assert.Equal(DateTime.Now.Day, data.LastModified.Day);
+                Assert.Equal(bucketObject, data.ObjectName);
+                Assert.Equal(54, data.Size);
+                Assert.Equal(1, data.MetaData.Count);
+                Assert.Equal("text/plain", data.MetaData["Content-Type"]);
+
+                // Clean
+                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
                 Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
             }
