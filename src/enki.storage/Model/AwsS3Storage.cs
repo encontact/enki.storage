@@ -41,6 +41,12 @@ namespace enki.storage.Model
         {
             ValidateInstance();
 
+            /*
+            NOTA: Esse código corresponde ao método "DoesS3BucketExistV2Async" que substitui o
+                  método obsoleto "DoesS3BucketExistAsync". Porém, até o dia  dessa alteração 
+                  não tinha sido liberado o pacote nuget contendo essa melhoria, então replicamos o código aqui. 
+                  Obs: Futuramente passar a utilizar o método 'DoesS3BucketExistV2Async'.
+            */
             try
             {
                 await _client.GetACLAsync(bucketName).ConfigureAwait(false);
