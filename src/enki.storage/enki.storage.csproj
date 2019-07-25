@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.3.102.13" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.104.3" />
     <PackageReference Include="Minio" Version="3.0.11" />
   </ItemGroup>
 

@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Amazon;
+﻿using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using enki.storage.Interface;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace enki.storage.Model
 {
@@ -40,9 +40,27 @@ namespace enki.storage.Model
         public override async Task<bool> BucketExistsAsync(string bucketName)
         {
             ValidateInstance();
-            return await _client.DoesS3BucketExistAsync(bucketName).ConfigureAwait(false);
-            //var buckets = await _client.ListBucketsAsync().ConfigureAwait(false);
-            //return buckets.Buckets.Exists(b => b.BucketName == bucketName);
+
+            try
+            {
+                await _client.GetACLAsync(bucketName).ConfigureAwait(false);
+            }
+            catch (AmazonS3Exception e)
+            {
+                switch (e.ErrorCode)
+                {
+                    // A redirect error or a forbidden error means the bucket exists.
+                    case "AccessDenied":
+                    case "PermanentRedirect":
+                        return true;
+                    case "NoSuchBucket":
+                        return false;
+                    default:
+                        throw;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
