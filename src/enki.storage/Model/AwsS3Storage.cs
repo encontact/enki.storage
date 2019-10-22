@@ -347,9 +347,9 @@ namespace enki.storage.Model
                 if (reqParams != null)
                 {
                     if (reqParams.ContainsKey("response-expires")) request.ResponseHeaderOverrides.Expires = reqParams["response-expires"];
-                    if (reqParams.ContainsKey("response-content-type")) request.ResponseHeaderOverrides.Expires = reqParams["response-content-type"];
-                    if (reqParams.ContainsKey("response-cache-control")) request.ResponseHeaderOverrides.Expires = reqParams["response-cache-control"];
-                    if (reqParams.ContainsKey("response-content-disposition")) request.ResponseHeaderOverrides.Expires = reqParams["response-content-disposition"];
+                    if (reqParams.ContainsKey("response-content-type")) request.ResponseHeaderOverrides.ContentType = reqParams["response-content-type"];
+                    if (reqParams.ContainsKey("response-cache-control")) request.ResponseHeaderOverrides.CacheControl = reqParams["response-cache-control"];
+                    if (reqParams.ContainsKey("response-content-disposition")) request.ResponseHeaderOverrides.ContentDisposition = reqParams["response-content-disposition"];
                 }
                 return _client.GetPreSignedURL(request);
             }).ConfigureAwait(false);

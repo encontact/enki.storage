@@ -2,6 +2,7 @@
 using enki.storage.Model;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
@@ -217,7 +218,8 @@ namespace enki.storage.integration.test.TesteStorage
         public async Task PresignGetObjectTest()
         {
             var client = new MinioStorage(_config);
-            var bucketObject = "test/SimpleFile.txt";
+            var fileName = "SimpleFile.txt";
+            var bucketObject = $"test/{fileName}";
             var bucket = _config.DefaultBucket + "-presign-getobject";
             try
             {
@@ -234,20 +236,22 @@ namespace enki.storage.integration.test.TesteStorage
                 }
                 Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
                 var urlToGetObject = await client.PresignedGetObjectAsync(bucket, bucketObject, 60).ConfigureAwait(false);
+                Assert.Contains(fileName, urlToGetObject);
                 using (var clientWeb = new WebClient())
                 {
                     var data = await clientWeb.DownloadDataTaskAsync(new Uri(urlToGetObject)).ConfigureAwait(false);
                     Assert.Equal(filePutSize, data.Length);
                 }
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
             }
             catch (Exception e)
             {
                 Assert.False(true, e.Message);
+            }
+            finally
+            {
                 await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
             }
         }
 
@@ -308,7 +312,8 @@ namespace enki.storage.integration.test.TesteStorage
                 // Test
                 var data = await client.GetObjectInfoAsync(bucket, bucketObject).ConfigureAwait(false);
                 Assert.NotNull(data);
-                Assert.Equal("bfece62529a41e4f0c16cd72c81ab8ba", data.ETag);
+                Assert.NotNull(data.ETag);
+                Assert.True(data.ETag.Count() > 10);
                 Assert.Equal("text/plain", data.ContentType);
                 Assert.Equal(DateTime.MaxValue, data.Expires);
                 Assert.Equal(DateTime.Now.Year, data.LastModified.Year);
