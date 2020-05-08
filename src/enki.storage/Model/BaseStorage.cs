@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using enki.storage.Interface;
 
@@ -24,6 +25,7 @@ namespace enki.storage.Model
         public virtual Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType) => throw new NotImplementedException();
         public virtual Task RemoveBucketAsync(string bucketName) => throw new NotImplementedException();
         public virtual Task RemoveObjectAsync(string bucketName, string objectName) => throw new NotImplementedException();
+        public virtual Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public virtual Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName) => throw new NotImplementedException();
         public virtual Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null) => throw new NotImplementedException();
         public virtual Task SetCorsToBucketAsync(string bucketName, string allowedOrigin) => throw new NotImplementedException();
@@ -59,5 +61,6 @@ namespace enki.storage.Model
             var regex = new Regex(pattern, RegexOptions.Singleline);
             return regex.IsMatch(objectName);
         }
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿//using System;
+//using System.Collections.Generic;
 //using System.IO;
 //using System.Net;
 //using System.Threading.Tasks;
@@ -373,6 +374,70 @@
 //                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
 //                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
 //                Assert.False(true, e.Message);
+//            }
+//        }
+
+
+//        [Fact]
+//        public async Task RemovePrefixTest()
+//        {
+//            var client = new AwsS3Storage(_config);
+//            var bucket = _config.DefaultBucket + "-removeprefix";
+//            var rootFolder = "test";
+//            var bucketObjectList = new List<string>();
+//            for (var i = 0; i < 50; i++)
+//            {
+//                var group = i % 2;
+//                bucketObjectList.Add($"{rootFolder}/{group}/SimpleFile{i}.txt");
+//            }
+//            var otherFolder = "test2/1/SimpleFile1.txt";
+//            try
+//            {
+//                client.Connect();
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+//                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+
+//                // Other folder
+//                Assert.False(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+//                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+//                {
+//                    await client.PutObjectAsync(bucket, otherFolder, stream, stream.Length, "text/plain");
+//                }
+//                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+
+//                // To delete items
+//                foreach (var item in bucketObjectList)
+//                {
+//                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+//                    using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+//                    {
+//                        await client.PutObjectAsync(bucket, item, stream, stream.Length, "text/plain");
+//                    }
+//                    Assert.True(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+//                }
+
+//                var processor = await client.RemovePrefixAsync(bucket, rootFolder, 10).ConfigureAwait(false);
+//                processor.WaitComplete();
+
+//                foreach (var item in bucketObjectList)
+//                {
+//                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), $"Falhou exclusao arquivo: {item}");
+//                }
+//                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+//            }
+//            catch (Exception e)
+//            {
+//                Assert.False(true, e.Message);
+//            }
+//            finally
+//            {
+//                foreach (var item in bucketObjectList)
+//                {
+//                    await client.RemoveObjectAsync(bucket, item).ConfigureAwait(false);
+//                }
+//                await client.RemoveObjectAsync(bucket, otherFolder).ConfigureAwait(false);
+//                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
 //            }
 //        }
 //    }

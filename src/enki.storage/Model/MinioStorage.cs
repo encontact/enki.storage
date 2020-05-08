@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using enki.storage.Interface;
 using Minio;
 using Minio.DataModel;
+using Minio.Exceptions;
 
 namespace enki.storage.Model
 {
@@ -140,6 +144,54 @@ namespace enki.storage.Model
         {
             ValidateInstance();
             await _minioClient.RemoveObjectAsync(bucketName, objectName).ConfigureAwait(false);
+        }
+
+        public override async Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default)
+        {
+            ValidateInstance();
+
+            var processor = new BatchDeleteProcessor(async (IEnumerable<string> keys) =>
+            {
+                var finishedDelete = false;
+                var observableDelete = await _minioClient.RemoveObjectAsync(bucketName, keys, cancellationToken).ConfigureAwait(false);
+                // Remove list of objects in objectNames from the bucket bucketName.
+                observableDelete.Subscribe(
+                    deleteError => Console.WriteLine("Object: {0}", deleteError.Key),
+                    ex => Console.WriteLine("OnError: {0}", ex),
+                    () => finishedDelete = true
+                );
+
+                while (!finishedDelete)
+                    await Task.Delay(250);
+            });
+
+            var bucketKeys = new List<string>();
+            var finishedList = false;
+            var prefixToFilter = (prefix.EndsWith("/") ? prefix : prefix + "/");
+            var observable = _minioClient.ListObjectsAsync(bucketName, prefixToFilter, true, cancellationToken);
+            observable.Subscribe
+            (
+                item =>
+                {
+                    bucketKeys.Add(item.Key);
+                    if (bucketKeys.Count >= chunkSize)
+                    {
+                        processor.EnqueueChunk(bucketKeys);
+                        bucketKeys = new List<string>();
+                    }
+                },
+                () =>
+                {
+                    if (bucketKeys.Any())
+                        processor.EnqueueChunk(bucketKeys);
+
+                    finishedList = true;
+                }
+            );
+
+            while (!finishedList) await Task.Delay(100);
+
+            return processor;
         }
 
         /// <summary>

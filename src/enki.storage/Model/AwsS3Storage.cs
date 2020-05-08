@@ -6,6 +6,8 @@ using enki.storage.Interface;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace enki.storage.Model
@@ -244,6 +246,39 @@ namespace enki.storage.Model
         {
             ValidateInstance();
             await _client.DeleteObjectAsync(bucketName, objectName).ConfigureAwait(false);
+        }
+
+        public override async Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default)
+        {
+            ValidateInstance();
+
+            var processor = new BatchDeleteProcessor(async (IEnumerable<string> keys) =>
+            {
+                var deleteRequest = new DeleteObjectsRequest
+                {
+                    BucketName = bucketName,
+                    Objects = keys.Select(k => new KeyVersion { Key = k }).ToList()
+                };
+                await _client.DeleteObjectsAsync(deleteRequest, cancellationToken).ConfigureAwait(false);
+            });
+
+            ListObjectsV2Response response;
+            var prefixToFilter = (prefix.EndsWith("/") ? prefix : prefix + "/");
+            ListObjectsV2Request request = new ListObjectsV2Request
+            {
+                BucketName = bucketName,
+                Prefix = prefixToFilter,
+                MaxKeys = chunkSize
+            };
+            do
+            {
+                response = await _client.ListObjectsV2Async(request);
+                processor.EnqueueChunk(response.S3Objects.Select(o => o.Key));
+
+                request.ContinuationToken = response.NextContinuationToken;
+            } while (response.IsTruncated);
+
+            return processor;
         }
 
         ///// <summary>

@@ -26,7 +26,7 @@ namespace enki.storage.Model
             LastModified = stat.LastModified;
             ETag = stat.ETag;
             ContentType = stat.ContentType;
-            MetaData = stat.metaData;
+            MetaData = stat.MetaData;
 
             // Not existent values.
             Expires = DateTime.MaxValue;
