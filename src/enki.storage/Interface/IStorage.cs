@@ -14,6 +14,7 @@ namespace enki.storage.Interface
         void Connect();
         Task<bool> BucketExistsAsync(string bucketName);
         Task MakeBucketAsync(string bucketName);
+        Task MakeBucketAsync(string bucketName, string region);
         Task RemoveBucketAsync(string bucketName);
         Task PutObjectAsync(string bucketName, string objectName, string filePath, string contentType);
         Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType);

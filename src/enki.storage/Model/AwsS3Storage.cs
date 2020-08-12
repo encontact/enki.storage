@@ -31,7 +31,13 @@ namespace enki.storage.Model
         {
             if (_client != null) return;
             var credentials = new BasicAWSCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey);
-            _client = new AmazonS3Client(credentials, RegionEndpoint.GetBySystemName(ServerConfig.Region));
+
+            // TODO: Ação para permitir que haja ações Inter-Regiões:
+            // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
+            if (ServerConfig.MustConnectToRegion())
+                _client = new AmazonS3Client(credentials, RegionEndpoint.GetBySystemName(ServerConfig.Region));
+            else
+                _client = new AmazonS3Client(credentials);
         }
 
         /// <summary>
@@ -79,6 +85,23 @@ namespace enki.storage.Model
         {
             ValidateInstance();
             await _client.PutBucketAsync(bucketName).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Cria um balde de forma assincrona no servidor, especificamente numa região.
+        /// </summary>
+        /// <param name="bucketName">Nome da carteira a ser criada.</param>
+        public override async Task MakeBucketAsync(string bucketName, string region)
+        {
+            ValidateInstance();
+
+            var request = new PutBucketRequest()
+            {
+                BucketName = bucketName,
+                BucketRegionName = region,
+                UseClientRegion = false,
+            };
+            await _client.PutBucketAsync(request).ConfigureAwait(false);
         }
 
         /// <summary>

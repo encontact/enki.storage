@@ -12,7 +12,13 @@
 //    public class AwsS3StorageTest
 //    {
 //        private IStorageServerConfig _config { get; set; }
-//        public AwsS3StorageTest() => _config = StorageTestConfig.GetAppsettingsConfig(StorageType.S3);
+//        private IStorageServerConfig _configWithoutRegion { get; set; }
+//        public AwsS3StorageTest()
+//        {
+//            _config = StorageTestConfig.GetAppsettingsConfig(StorageType.S3);
+//            // Força configuração sem região.
+//            _configWithoutRegion = StorageTestConfig.GetAppsettingsConfig(StorageType.S3, "");
+//        }
 
 //        [Fact]
 //        public async Task NotFoundBucketExistsAsyncTest()
@@ -331,6 +337,70 @@
 //        }
 
 //        [Fact]
+//        public async Task CopyObjectBetweenRegionsTest()
+//        {
+//            var client = new AwsS3Storage(_configWithoutRegion);
+
+//            var originRegion = "us-east-1";
+//            var originBucketObject = "test/SimpleFile.txt";
+//            var originBucket = $"virginia-copy-object";
+
+//            var destRegion = "us-west-2";
+//            var destBucketObject = "test/SimpleCopiedFile.txt";
+//            var destBucket = "oregon-copy-object";
+            
+//            try
+//            {
+//                client.Connect();
+
+//                #region Origin bucket + file upload
+//                Assert.False(await client.BucketExistsAsync(originBucket).ConfigureAwait(false));
+//                await client.MakeBucketAsync(originBucket, originRegion).ConfigureAwait(false);
+//                Assert.True(await client.BucketExistsAsync(originBucket).ConfigureAwait(false));
+//                Assert.False(await client.ObjectExistAsync(originBucket, destBucketObject).ConfigureAwait(false));
+//                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+//                {
+//                    await client.PutObjectAsync(originBucket, originBucketObject, stream, stream.Length, "text/plain");
+//                }
+//                Assert.True(await client.ObjectExistAsync(originBucket, originBucketObject).ConfigureAwait(false));
+//                #endregion
+
+//                #region Create destiny bucket
+//                Assert.False(await client.BucketExistsAsync(destBucket).ConfigureAwait(false));
+//                await client.MakeBucketAsync(destBucket, destRegion).ConfigureAwait(false);
+//                Assert.True(await client.BucketExistsAsync(destBucket).ConfigureAwait(false));
+//                Assert.False(await client.ObjectExistAsync(destBucket, destBucketObject).ConfigureAwait(false));
+//                #endregion
+
+//                await client.CopyObjectAsync(originBucket, originBucketObject, destBucket, destBucketObject).ConfigureAwait(false);
+//                Assert.True(await client.ObjectExistAsync(destBucket, destBucketObject).ConfigureAwait(false));
+//            }
+//            catch (Exception e)
+//            {
+//                Assert.False(true, e.Message);
+//            }
+//            finally
+//            {
+//                if (await client.ObjectExistAsync(originBucket, originBucketObject).ConfigureAwait(false))
+//                {
+//                    await client.RemoveObjectAsync(originBucket, originBucketObject).ConfigureAwait(false);
+//                }
+//                if (await client.ObjectExistAsync(destBucket, destBucketObject).ConfigureAwait(false))
+//                {
+//                    await client.RemoveObjectAsync(destBucket, destBucketObject).ConfigureAwait(false);
+//                }
+//                if (await client.BucketExistsAsync(originBucket).ConfigureAwait(false))
+//                {
+//                    await client.RemoveBucketAsync(originBucket).ConfigureAwait(false);
+//                }
+//                if (await client.BucketExistsAsync(destBucket).ConfigureAwait(false))
+//                {
+//                    await client.RemoveBucketAsync(destBucket).ConfigureAwait(false);
+//                }
+//            }
+//        }
+
+//        [Fact]
 //        public async Task GetObjectInfoAsyncTest()
 //        {
 //            var client = new AwsS3Storage(_config);
@@ -376,7 +446,6 @@
 //                Assert.False(true, e.Message);
 //            }
 //        }
-
 
 //        [Fact]
 //        public async Task RemovePrefixTest()

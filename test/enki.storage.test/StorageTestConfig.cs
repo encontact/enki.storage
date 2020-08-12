@@ -13,7 +13,7 @@ namespace enki.storage.integration.test.TesteStorage
 
     public static class StorageTestConfig
     {
-        public static IStorageServerConfig GetAppsettingsConfig(StorageType type)
+        public static IStorageServerConfig GetAppsettingsConfig(StorageType type, string forceRegion = null)
         {
             var config = new ConfigurationBuilder()
                  .AddJsonFile($"config/appsettings.json", optional: true, reloadOnChange: true)
@@ -29,7 +29,7 @@ namespace enki.storage.integration.test.TesteStorage
                     SecretKey = config["S3:SecretKey"],
                     Secure = Convert.ToBoolean(config["S3:Secure"]),
                     DefaultBucket = config["S3:DefaultBucket"],
-                    Region = config["S3:Region"]
+                    Region = forceRegion ?? config["S3:Region"]
                 };
             }
 
@@ -40,9 +40,12 @@ namespace enki.storage.integration.test.TesteStorage
                 SecretKey = config["Minio:SecretKey"],
                 Secure = Convert.ToBoolean(config["Minio:Secure"]),
                 DefaultBucket = config["Minio:DefaultBucket"],
-                Region = config["Minio:Region"]
+                Region = forceRegion ?? config["Minio:Region"]
             };
         }
+
+        public static IStorageServerConfig GetAppsettingsConfig(StorageType type)
+            => GetAppsettingsConfig(type, null);
     }
 
     public class StorageConfigTest : IStorageServerConfig
@@ -53,5 +56,7 @@ namespace enki.storage.integration.test.TesteStorage
         public string Region { get; set; }
         public bool Secure { get; set; }
         public string DefaultBucket { get; set; }
+
+        public bool MustConnectToRegion() => !string.IsNullOrWhiteSpace(Region);
     }
 }

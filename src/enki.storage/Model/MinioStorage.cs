@@ -8,14 +8,13 @@ using System.Threading.Tasks;
 using enki.storage.Interface;
 using Minio;
 using Minio.DataModel;
-using Minio.Exceptions;
 
 namespace enki.storage.Model
 {
     public class MinioStorage : BaseStorage
     {
         private MinioClient _minioClient;
-        public bool UseRegion => !string.IsNullOrWhiteSpace(ServerConfig.Region);
+        public bool UseRegion => ServerConfig.MustConnectToRegion();
 
         public MinioStorage(IStorageServerConfig config) : base(config) { }
 
@@ -30,6 +29,7 @@ namespace enki.storage.Model
             //       nos outros pontos, porém não deve ser informada na conexão.
             // Issue relatando caso: https://github.com/minio/minio-js/issues/619
             // Notar que exemplo de connect no GitHub do Minio.DotNet não inclui region no construtor, mas apresenta nas chamadas de bucket.
+            // Devido a estes pontos, não é efetuada a verificação MustConnectToRegion() da interface de configuração.
             _minioClient = new MinioClient(ServerConfig.EndPoint, ServerConfig.AccessKey, ServerConfig.SecretKey);
         }
 
@@ -69,6 +69,16 @@ namespace enki.storage.Model
             }
 
             await _minioClient.MakeBucketAsync(bucketName).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Cria um balde de forma assincrona no servidor, especificamente numa região.
+        /// </summary>
+        /// <param name="bucketName">Nome da carteira a ser criada.</param>
+        public override async Task MakeBucketAsync(string bucketName, string region)
+        {
+            ValidateInstance();
+            await _minioClient.MakeBucketAsync(bucketName, ServerConfig.Region).ConfigureAwait(false);
         }
 
         /// <summary>
