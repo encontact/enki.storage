@@ -296,8 +296,9 @@ namespace enki.storage.Model
             do
             {
                 response = await _client.ListObjectsV2Async(request);
-                processor.EnqueueChunk(response.S3Objects.Select(o => o.Key));
+                if(!response.S3Objects.Any()) continue;
 
+                processor.EnqueueChunk(response.S3Objects.Select(o => o.Key));
                 request.ContinuationToken = response.NextContinuationToken;
             } while (response.IsTruncated);
 

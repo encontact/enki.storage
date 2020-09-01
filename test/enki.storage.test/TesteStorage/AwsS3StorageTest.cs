@@ -1,14 +1,14 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.IO;
-//using System.Net;
-//using System.Threading.Tasks;
-//using enki.storage.Interface;
-//using enki.storage.Model;
-//using Xunit;
+﻿// using System;
+// using System.Collections.Generic;
+// using System.IO;
+// using System.Net;
+// using System.Threading.Tasks;
+// using enki.storage.Interface;
+// using enki.storage.Model;
+// using Xunit;
 
-//namespace enki.storage.integration.test.TesteStorage
-//{
+// namespace enki.storage.integration.test.TesteStorage
+// {
 //    public class AwsS3StorageTest
 //    {
 //        private IStorageServerConfig _config { get; set; }
@@ -71,7 +71,7 @@
 //                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
 //                await client.SetCorsToBucketAsync(bucket, "*").ConfigureAwait(false);
 //                var cors = await client.RetrieveCORSConfigurationAsync(bucket).ConfigureAwait(false);
-//                if (cors == null) Assert.True(false, "A configuração cors inserida não foi encontrada no servidor.");
+//                if (cors == null) Assert.True(false, "The CORS config not found on server.");
 //                Assert.Single(cors.Rules);
 //            }
 //            catch (Exception e)
@@ -92,11 +92,11 @@
 //            try
 //            {
 //                client.Connect();
-//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket do teste já existe.");
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket already exists.");
 //                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket não existe após ter sido criado.");
+//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket was not created with success.");
 //                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket persiste após remoção");
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket exists after delete.");
 //            }
 //            catch (Exception e)
 //            {
@@ -179,7 +179,7 @@
 //                    }
 //                }
 //                var response = httpRequest.GetResponse() as HttpWebResponse;
-//                if (response.StatusCode != HttpStatusCode.OK) Assert.True(false, "Envio HTTP não acusou sucesso.");
+//                if (response.StatusCode != HttpStatusCode.OK) Assert.True(false, "Error on HTTP result.");
 //                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
 //            }
 //            catch (Exception e)
@@ -208,17 +208,17 @@
 //            try
 //            {
 //                client.Connect();
-//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "Já existe o bucket.");
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket already exists.");
 //                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket não foi criado.");
-//                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "O objeto já existe no servidor");
+//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket wasn´t created");
+//                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "The object already exists on server");
 //                long filePutSize = 0;
 //                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
 //                {
 //                    filePutSize = stream.Length;
 //                    await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
 //                }
-//                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "O objeto não foi criado no servidor");
+//                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "The object was not created on server");
 //                using (var dataStream = new MemoryStream())
 //                {
 //                    await client.GetObjectAsync(bucket, bucketObject,
@@ -257,17 +257,17 @@
 //            try
 //            {
 //                client.Connect();
-//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "Existe o bucket.");
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket already exists.");
 //                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "Não existe o bucket.");
-//                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "Existe o objecto.");
+//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket was´nt exists.");
+//                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "The object already exists");
 //                long filePutSize = 0;
 //                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
 //                {
 //                    filePutSize = stream.Length;
 //                    await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
 //                }
-//                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "Não existe o objeto.");
+//                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false), "The object was not exists");
 //                var urlToGetObject = await client.PresignedGetObjectAsync(bucket, bucketObject, 60).ConfigureAwait(false);
 //                Assert.Contains(fileName, urlToGetObject);
 //                using (var clientWeb = new WebClient())
@@ -348,7 +348,7 @@
 //            var destRegion = "us-west-2";
 //            var destBucketObject = "test/SimpleCopiedFile.txt";
 //            var destBucket = "oregon-copy-object";
-            
+
 //            try
 //            {
 //                client.Connect();
@@ -426,9 +426,9 @@
 //                Assert.Equal("\"bfece62529a41e4f0c16cd72c81ab8ba\"", data.ETag);
 //                Assert.Equal("text/plain", data.ContentType);
 //                Assert.Equal(DateTime.MaxValue, data.Expires);
-//                Assert.Equal(DateTime.Now.Year, data.LastModified.Year);
-//                Assert.Equal(DateTime.Now.Month, data.LastModified.Month);
-//                Assert.Equal(DateTime.Now.Day, data.LastModified.Day);
+//                Assert.Equal(DateTime.UtcNow.Year, data.LastModified.Year);
+//                Assert.Equal(DateTime.UtcNow.Month, data.LastModified.Month);
+//                Assert.Equal(DateTime.UtcNow.Day, data.LastModified.Day);
 //                Assert.Equal(bucketObject, data.ObjectName);
 //                Assert.Equal(54, data.Size);
 //                Assert.Equal(1, data.MetaData.Count);
@@ -491,7 +491,7 @@
 
 //                foreach (var item in bucketObjectList)
 //                {
-//                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), $"Falhou exclusao arquivo: {item}");
+//                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), $"Fail on delete file: {item}");
 //                }
 //                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
 //            }
@@ -509,5 +509,33 @@
 //                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
 //            }
 //        }
+
+//         [Fact]
+//         public async Task MustRemoveNotExistingPrefixTest()
+//         {
+//             var client = new AwsS3Storage(_config);
+//             var bucket = _config.DefaultBucket + "-removeprefix";
+//             var inexistentRootFolderToDelete = "test-invalid";
+//             try
+//             {
+//                 client.Connect();
+//                 Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket already exists");
+//                 await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+//                 Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "The bucket is not created with success");
+
+//                 // Call delete an inexistent Folder, and can´t thrown exception.
+//                 var processor = await client.RemovePrefixAsync(bucket, inexistentRootFolderToDelete, 10).ConfigureAwait(false);
+//                 processor.WaitComplete();
+//                 Assert.True(true, "Process without errors.");
+//             }
+//             catch (Exception e)
+//             {
+//                 Assert.False(true, e.Message);
+//             }
+//             finally
+//             {
+//                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+//             }
+//         }
 //    }
-//}
+// }
