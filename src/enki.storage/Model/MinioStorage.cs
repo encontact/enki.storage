@@ -214,6 +214,38 @@ namespace enki.storage.Model
             => new ObjectInfo(await StatObjectAsync(bucketName, objectName).ConfigureAwait(false));
 
         /// <summary>
+        /// Recupera todos os objetos do bucked ou a partir de um prefix de forma recursiva.
+        /// </summary>
+        /// <param name="bucketName">Bucket name</param>
+        /// <param name="prefix">Opcional, prefixo raiz para pesquisa</param>
+        /// <returns>Lista de arquivos encontrados, ignorando diretórios.</returns>
+        public override async Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null)
+        {
+            ValidateInstance();
+            var finishedList = false;
+            var result = new List<IObjectInfo>();
+
+            var items = _minioClient.ListObjectsAsync(bucketName, prefix, true);
+            items.Subscribe
+            (
+                item =>
+                {
+                    if(!item.IsDir)
+                        result.Add(new ObjectInfo(item));
+                },
+                () =>
+                {
+                    finishedList = true;
+                }
+            );
+
+            while (!finishedList) 
+                await Task.Delay(100);
+
+            return result;
+        }
+
+        /// <summary>
         /// Valida se um objeto existe ou não no balde.
         /// Se o arquivo não existir no servidor, será retornada uma Exception.
         /// </summary>

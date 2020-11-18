@@ -18,6 +18,7 @@ namespace enki.storage.Model
         public virtual void Connect() => throw new NotImplementedException();
         public virtual Task GetObjectAsync(string bucketName, string objectName, Action<Stream> action) => throw new NotImplementedException();
         public virtual Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName) => throw new NotImplementedException();
+        public virtual Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null) => throw new NotImplementedException();
         public virtual Task MakeBucketAsync(string bucketName) => throw new NotImplementedException();
         public virtual Task MakeBucketAsync(string bucketName, string region) => throw new NotImplementedException();
         public virtual Task<bool> ObjectExistAsync(string bucketName, string objectName) => throw new NotImplementedException();
@@ -62,6 +63,5 @@ namespace enki.storage.Model
             var regex = new Regex(pattern, RegexOptions.Singleline);
             return regex.IsMatch(objectName);
         }
-
     }
 }

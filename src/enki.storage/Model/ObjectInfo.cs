@@ -32,6 +32,19 @@ namespace enki.storage.Model
             Expires = DateTime.MaxValue;
         }
 
+        public ObjectInfo(Item item)
+        {
+            ObjectName = item.Key;
+            Size = (long)item.Size;
+            LastModified = item.LastModifiedDateTime.Value;
+            ETag = item.ETag;
+            ContentType = "application/octet-stream";
+            MetaData = new Dictionary<string, string>();
+
+            // Not existent values.
+            Expires = DateTime.MaxValue;
+        }
+
         public ObjectInfo(string objectName, GetObjectMetadataResponse stat)
         {
             ObjectName = objectName;
@@ -41,6 +54,19 @@ namespace enki.storage.Model
             MetaData = stat.ResponseMetadata.Metadata;
             Expires = stat.Expires == DateTime.MinValue ? DateTime.MaxValue : stat.Expires;
             ContentType = stat.Headers.ContentType;
+        }
+
+        public ObjectInfo(S3Object item)
+        {
+            ObjectName = item.Key;
+            Size = item.Size;
+            LastModified = item.LastModified;
+            ETag = item.ETag;
+            MetaData = new Dictionary<string, string>();
+            ContentType = "application/octet-stream";
+
+            // Not existent values.
+            Expires = DateTime.MaxValue;
         }
     }
 }

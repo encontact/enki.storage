@@ -22,6 +22,7 @@ namespace enki.storage.Interface
         Task RemoveObjectAsync(string bucketName, string objectName);
         Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default);
         Task<bool> ObjectExistAsync(string bucketName, string objectName);
+        Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null);
         Task GetObjectAsync(string bucketName, string objectName, Action<Stream> action);
         Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName);
         Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName);

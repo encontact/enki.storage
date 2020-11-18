@@ -179,6 +179,29 @@ namespace enki.storage.Model
             => new ObjectInfo(objectName, await StatObjectAsync(bucketName, objectName).ConfigureAwait(false));
 
         /// <summary>
+        /// Recupera todos os objetos do bucked ou a partir de um prefix de forma recursiva.
+        /// A AWS limita esta chamada a 1.000 registros de retorno, para mais do que isso será
+        /// necessário criar algo com paginação.
+        /// </summary>
+        /// <param name="bucketName">Bucket name</param>
+        /// <param name="prefix">Opcional, prefixo raiz para pesquisa</param>
+        /// <returns>Lista de arquivos encontrados, ignorando diretórios.</returns>
+        public override async Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null)
+        {
+            ValidateInstance();
+            var result = new List<IObjectInfo>();
+
+            var request = new ListObjectsV2Request { 
+                BucketName = bucketName,
+                Prefix = prefix,
+            };
+            var resultS3List = await _client.ListObjectsV2Async(request).ConfigureAwait(false);
+            result = resultS3List.S3Objects.Select(o => (IObjectInfo)new ObjectInfo(o)).ToList();
+
+            return result;
+        }
+
+        /// <summary>
         /// Valida se um objeto existe ou não no balde.
         /// Se o arquivo não existir no servidor, será retornada uma Exception.
         /// </summary>

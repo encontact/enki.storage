@@ -513,5 +513,65 @@ namespace enki.storage.integration.test.TesteStorage
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
             }
         }
+
+        [Fact]
+        public async Task ListObjectsWithoutPrefixTest()
+        {
+            var client = new MinioStorage(_config);
+            var bucket = _config.DefaultBucket + "-removeprefix";
+            var rootFolder = "test";
+            var bucketObjectList = new List<string>();
+            for (var i = 0; i < 50; i++)
+            {
+                var group = i % 2;
+                bucketObjectList.Add($"{rootFolder}/{group}/SimpleFile{i}.txt");
+            }
+            var otherFolder = "test2/1/SimpleFile1.txt";
+            try
+            {
+                client.Connect();
+                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+
+                // Other folder
+                Assert.False(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+                {
+                    await client.PutObjectAsync(bucket, otherFolder, stream, stream.Length, "text/plain");
+                }
+                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+
+                // To delete items
+                foreach (var item in bucketObjectList)
+                {
+                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+                    using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+                    {
+                        await client.PutObjectAsync(bucket, item, stream, stream.Length, "text/plain");
+                    }
+                    Assert.True(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+                }
+
+                // List items
+                var items = await client.ListObjectsAsync(bucket).ConfigureAwait(false);
+                var expectedTotal = bucketObjectList.Count() + 1;
+                Assert.Equal(expectedTotal, items.Count());
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, e.Message);
+            }
+            finally
+            {
+                foreach (var item in bucketObjectList)
+                {
+                    await client.RemoveObjectAsync(bucket, item).ConfigureAwait(false);
+                }
+                await client.RemoveObjectAsync(bucket, otherFolder).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+            }
+        }
+
     }
 }
