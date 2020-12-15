@@ -294,6 +294,22 @@ namespace enki.storage.Model
             await _client.DeleteObjectAsync(bucketName, objectName).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Efetua a exclusão em lote e vários objetos ao mesmo tempo.
+        /// </summary>
+        /// <param name="bucketName">Nome do bucket para remover.</param>
+        /// <param name="objects">Lista de objetos a serem apagados</param>
+        /// <returns></returns>
+        public override async Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects)
+        {
+            DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest
+            {
+                BucketName = bucketName,
+                Objects = objects.Select(o => new KeyVersion { Key = o }).ToList()
+            };
+            await _client.DeleteObjectsAsync(multiObjectDeleteRequest).ConfigureAwait(false);
+        }
+
         public override async Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default)
         {
             ValidateInstance();

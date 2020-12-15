@@ -343,7 +343,7 @@ namespace enki.storage.integration.test.TesteStorage
         {
             var client = new MinioStorage(_config);
             var bucketObject = "test/SimpleFile.txt";
-            var bucket = _config.DefaultBucket + "-putobject";
+            var bucket = _config.DefaultBucket + "-deleteobjects";
             try
             {
                 client.Connect();
@@ -367,6 +367,54 @@ namespace enki.storage.integration.test.TesteStorage
             finally
             {
                 await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task RemoveObjectsTest()
+        {
+            var client = new MinioStorage(_config);
+            var bucket = _config.DefaultBucket + "-putobject";
+            var itemQuantity = 10;
+            var objectList = new List<string>();
+            try
+            {
+                client.Connect();
+                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+
+                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+                {
+                    for (int i = 0; i < itemQuantity; i++)
+                    {
+                        var bucketObject = $"test/SimpleFile{i}.txt";
+                        Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+
+                        await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
+
+                        Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                        objectList.Add(bucketObject);
+                    }
+                }
+
+                await client.RemoveObjectsAsync(bucket, objectList).ConfigureAwait(false);
+                foreach (var obj in objectList)
+                {
+                    Assert.False(await client.ObjectExistAsync(bucket, obj).ConfigureAwait(false));
+                }
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, e.Message);
+            }
+            finally
+            {
+                foreach (var obj in objectList)
+                {
+                    await client.RemoveObjectAsync(bucket, obj).ConfigureAwait(false);
+                }
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
             }
         }
@@ -442,7 +490,7 @@ namespace enki.storage.integration.test.TesteStorage
             var inexistentRootFolderToDelete = "test-invalid";
             var rootFolder = "test";
             var bucketObjectList = new List<string>();
-            for (var i= 0; i < 50; i++)
+            for (var i = 0; i < 50; i++)
             {
                 var group = i % 2;
                 bucketObjectList.Add($"{rootFolder}/{group}/SimpleFile{i}.txt");

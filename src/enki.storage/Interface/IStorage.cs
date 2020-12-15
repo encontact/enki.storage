@@ -20,6 +20,7 @@ namespace enki.storage.Interface
         Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType);
         Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt);
         Task RemoveObjectAsync(string bucketName, string objectName);
+        Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects);
         Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default);
         Task<bool> ObjectExistAsync(string bucketName, string objectName);
         Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null);

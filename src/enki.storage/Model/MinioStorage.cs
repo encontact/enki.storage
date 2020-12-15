@@ -156,6 +156,14 @@ namespace enki.storage.Model
             await _minioClient.RemoveObjectAsync(bucketName, objectName).ConfigureAwait(false);
         }
 
+        public override async Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects)
+        {
+            foreach (var objectName in objects)
+            {
+                await _minioClient.RemoveObjectAsync(bucketName, objectName).ConfigureAwait(false);
+            }
+        }
+
         public override async Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default)
         {
             ValidateInstance();
