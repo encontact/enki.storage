@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v2
       # https://docs.github.com/en/actions/reference/encrypted-secrets
       env:
-        NUGET_TOKEN: ${{secrets.NUGET_TOKEN}}
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Setup .NET
       # Authenticates packages to push to GPR
       uses: actions/setup-dotnet@v1
@@ -31,6 +31,6 @@ jobs:
     - name: Pack
       run: dotnet pack --configuration Release -o ./artifacts
     - name: Publish the package to Nuget
-      run: dotnet nuget push ./artifacts/*.nupkg -k "$NUGET_TOKEN"
+      run: dotnet nuget push ./artifacts/*.nupkg -k "$NUGET_AUTH_TOKEN"
       if: github.event == 'push'
 
