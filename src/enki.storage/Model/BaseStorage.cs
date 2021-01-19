@@ -1,10 +1,10 @@
-﻿using System;
+﻿using enki.storage.Interface;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using enki.storage.Interface;
 
 namespace enki.storage.Model
 {
@@ -22,7 +22,7 @@ namespace enki.storage.Model
         public virtual Task MakeBucketAsync(string bucketName) => throw new NotImplementedException();
         public virtual Task MakeBucketAsync(string bucketName, string region) => throw new NotImplementedException();
         public virtual Task<bool> ObjectExistAsync(string bucketName, string objectName) => throw new NotImplementedException();
-        public virtual Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt) => throw new NotImplementedException();
+        public virtual Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null) => throw new NotImplementedException();
         public virtual Task PutObjectAsync(string bucketName, string objectName, string filePath, string contentType) => throw new NotImplementedException();
         public virtual Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType) => throw new NotImplementedException();
         public virtual Task RemoveBucketAsync(string bucketName) => throw new NotImplementedException();

@@ -1,11 +1,13 @@
-﻿//using System;
+﻿//using enki.storage.Interface;
+//using enki.storage.Model;
+//using System;
 //using System.Collections.Generic;
 //using System.IO;
 //using System.Linq;
 //using System.Net;
+//using System.Security.Cryptography;
+//using System.Text;
 //using System.Threading.Tasks;
-//using enki.storage.Interface;
-//using enki.storage.Model;
 //using Xunit;
 
 //namespace enki.storage.integration.test.TesteStorage
@@ -197,6 +199,136 @@
 //                {
 //                    await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
 //                }
+//            }
+//        }
+
+//        [Fact]
+//        public async Task PresignPutObjectWithMd5ValidationTest()
+//        {
+//            var client = new AwsS3Storage(_config);
+//            var bucketObject = "test/SimpleFile.txt";
+//            var bucket = _config.DefaultBucket + "-presignputobject";
+//            try
+//            {
+//                client.Connect();
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+//                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+
+//                var fileBytes = File.ReadAllBytes("resources/SimpleResourceToAttach.txt");
+//                var fileMD5 = GetMd5(fileBytes);
+
+//                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+//                var urlToUpload = await client.PresignedPutObjectAsync(bucket, bucketObject, 60, fileMD5).ConfigureAwait(false);
+
+//                var httpRequest = WebRequest.Create(urlToUpload) as HttpWebRequest;
+//                httpRequest.Method = "PUT";
+//                httpRequest.Headers.Add("Content-MD5", fileMD5);
+
+//                using (var dataStream = httpRequest.GetRequestStream())
+//                {
+//                    var buffer = new byte[8000];
+//                    using (var fileStream = new MemoryStream(fileBytes))
+//                    {
+//                        var bytesRead = 0;
+//                        while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0)
+//                        {
+//                            dataStream.Write(buffer, 0, bytesRead);
+//                        }
+//                    }
+//                }
+
+//                var response = httpRequest.GetResponse() as HttpWebResponse;
+//                if (response.StatusCode != HttpStatusCode.OK) Assert.True(false, "Envio HTTP não acusou sucesso.");
+//                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+//            }
+//            catch (Exception e)
+//            {
+//                Assert.False(true, e.Message);
+//            }
+//            finally
+//            {
+//                if (await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+//                {
+//                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+//                }
+//                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+//                {
+//                    await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+//                }
+//            }
+//        }
+
+//        [Fact]
+//        public async Task ErrorOnPresignPutObjectWithInvalidFileTest()
+//        {
+//            var client = new AwsS3Storage(_config);
+//            var bucketObject = "test/SimpleFile.txt";
+//            var bucket = _config.DefaultBucket + "-presignputobject";
+//            try
+//            {
+//                client.Connect();
+//                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+//                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+//                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+
+//                var fileBytes = File.ReadAllBytes("resources/SimpleResourceToAttach.txt");
+//                var fileMD5 = GetMd5(fileBytes);
+
+//                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+//                var urlToUpload = await client.PresignedPutObjectAsync(bucket, bucketObject, 60, fileMD5).ConfigureAwait(false);
+
+//                var httpRequest = WebRequest.Create(urlToUpload) as HttpWebRequest;
+//                httpRequest.Method = "PUT";
+//                httpRequest.Headers.Add("Content-MD5", fileMD5);
+
+//                using (var dataStream = httpRequest.GetRequestStream())
+//                {
+//                    var buffer = new byte[8000];
+//                    var wrongFile = Encoding.ASCII.GetBytes("xxxxxxxx");
+//                    using (var fileStream = new MemoryStream(wrongFile))
+//                    {
+//                        var bytesRead = 0;
+//                        while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0)
+//                        {
+//                            dataStream.Write(buffer, 0, bytesRead);
+//                        }
+//                    }
+//                }
+
+//                try
+//                {
+//                    var response = httpRequest.GetResponse() as HttpWebResponse;
+//                    if (response.StatusCode == HttpStatusCode.OK) Assert.True(false, "Envio HTTP não acusou erro.");
+//                }
+//                catch (WebException ex)
+//                {
+//                    Assert.Equal("The remote server returned an error: (400) Bad Request.", ex.Message);
+//                }
+//            }
+//            catch (Exception e)
+//            {
+//                Assert.False(true, e.Message);
+//            }
+//            finally
+//            {
+//                if (await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+//                {
+//                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+//                }
+//                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+//                {
+//                    await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+//                }
+//            }
+//        }
+
+//        private string GetMd5(byte[] file)
+//        {
+//            using (var md5 = MD5.Create())
+//            {
+//                var hash = md5.ComputeHash(file);
+//                return Convert.ToBase64String(hash);
 //            }
 //        }
 
@@ -538,7 +670,6 @@
 //                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
 //            }
 //        }
-
 
 //        [Fact]
 //        public async Task ListObjectsWithoutPrefixTest()

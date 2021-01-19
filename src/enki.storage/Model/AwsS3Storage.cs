@@ -191,7 +191,8 @@ namespace enki.storage.Model
             ValidateInstance();
             var result = new List<IObjectInfo>();
 
-            var request = new ListObjectsV2Request { 
+            var request = new ListObjectsV2Request
+            {
                 BucketName = bucketName,
                 Prefix = prefix,
             };
@@ -221,8 +222,9 @@ namespace enki.storage.Model
         /// <param name="bucketName">Bucket onde será inserido o registro.</param>
         /// <param name="objectName">Nome/Caminho do objeto a ser inserido.</param>
         /// <param name="expiresInt">Tempo em segundos no qual a url será valida para o Upload.</param>
+        /// <param name="contentMD5">Hash MD5 para validação do arquivo que será feito o upload.</param>
         /// <returns></returns>
-        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt)
+        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null)
         {
             ValidateInstance();
 
@@ -235,6 +237,10 @@ namespace enki.storage.Model
                     Verb = HttpVerb.PUT,
                     Expires = DateTime.UtcNow.AddSeconds(expiresInt)
                 };
+
+                if (!string.IsNullOrWhiteSpace(contentMD5))
+                    request.Headers.ContentMD5 = contentMD5;
+
                 return _client.GetPreSignedURL(request);
             }).ConfigureAwait(false);
         }
@@ -335,7 +341,7 @@ namespace enki.storage.Model
             do
             {
                 response = await _client.ListObjectsV2Async(request);
-                if(!response.S3Objects.Any()) continue;
+                if (!response.S3Objects.Any()) continue;
 
                 processor.EnqueueChunk(response.S3Objects.Select(o => o.Key));
                 request.ContinuationToken = response.NextContinuationToken;

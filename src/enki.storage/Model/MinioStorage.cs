@@ -1,13 +1,13 @@
-﻿using System;
+﻿using enki.storage.Interface;
+using Minio;
+using Minio.DataModel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using enki.storage.Interface;
-using Minio;
-using Minio.DataModel;
 
 namespace enki.storage.Model
 {
@@ -109,7 +109,7 @@ namespace enki.storage.Model
         /// <param name="objectName">Nome/Caminho do objeto a ser inserido.</param>
         /// <param name="expiresInt">Tempo em segundos no qual a url será valida para o Upload.</param>
         /// <returns></returns>
-        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt)
+        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null)
         {
             ValidateInstance();
             return await _minioClient.PresignedPutObjectAsync(bucketName, objectName, expiresInt).ConfigureAwait(false);
@@ -238,7 +238,7 @@ namespace enki.storage.Model
             (
                 item =>
                 {
-                    if(!item.IsDir)
+                    if (!item.IsDir)
                         result.Add(new ObjectInfo(item));
                 },
                 () =>
@@ -247,7 +247,7 @@ namespace enki.storage.Model
                 }
             );
 
-            while (!finishedList) 
+            while (!finishedList)
                 await Task.Delay(100);
 
             return result;
