@@ -13,6 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      # https://docs.github.com/en/actions/reference/encrypted-secrets
       env:
         NUGET_TOKEN: ${{secrets.NUGET_TOKEN}}
     - name: Setup .NET
@@ -30,6 +31,6 @@ jobs:
     - name: Pack
       run: dotnet pack --configuration Release -o ./artifacts
     - name: Publish the package to Nuget
-      run: dotnet nuget push ./artifacts/*.nupkg -k ${{NUGET_TOKEN}}
+      run: dotnet nuget push ./artifacts/*.nupkg -k "$NUGET_TOKEN"
       if: github.event == 'push'
 
