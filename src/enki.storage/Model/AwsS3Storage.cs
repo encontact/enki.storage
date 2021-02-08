@@ -32,6 +32,12 @@ namespace enki.storage.Model
             if (_client != null) return;
             var credentials = new BasicAWSCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey);
 
+            // OBS: Essa configuração é feita pois por padrão, exclusivamente quando a região utilizada é a 
+            //      us-east-1, utiliza a assinatura "version 2", com isso as "Presigned URLs" geradas não
+            //      são formadas com todos parâmetros e acaba gerando erro 403 ao fazer upload pelo browser. 
+            //      Mais informações através do comentário na propriedade 'AWSConfigsS3.UseSignatureVersion4'.
+            AWSConfigsS3.UseSignatureVersion4 = true;
+
             // TODO: Ação para permitir que haja ações Inter-Regiões:
             // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
             if (ServerConfig.MustConnectToRegion())
