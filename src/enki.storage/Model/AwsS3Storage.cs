@@ -253,27 +253,38 @@ namespace enki.storage.Model
 
         /// <summary>
         /// Efetua o upload de um arquivo a partir do servidor.
+		/// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
         /// </summary>
         /// <param name="bucketName">Nome do balde</param>
         /// <param name="objectName">Nome do objeto</param>
         /// <param name="filePath">Caminho do arquivo no servidor</param>
         /// <param name="contentType">Tipo do conteúdo do arquivo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
+        public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
         {
             ValidateInstance();
+			var md5Check = new CreateMD5CheckSum(filePath);
             var request = new PutObjectRequest
             {
                 BucketName = bucketName,
                 Key = objectName,
                 FilePath = filePath,
-                ContentType = contentType
+                ContentType = contentType,
             };
-            await _client.PutObjectAsync(request).ConfigureAwait(false);
+			request.Headers.ContentMD5 = md5Check.GetMd5();
+			Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
+			
+			// Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
+			// Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
+			return new enki.storage.Model.PutObjectResponse(
+											result.HttpStatusCode == System.Net.HttpStatusCode.OK 
+											&& md5Check.Validate(result.ETag)
+						);
         }
 
         /// <summary>
         /// Efetua o upload de um arquivo a partir de um Stream em memória.
+		/// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
         /// </summary>
         /// <param name="bucketName">Nome do balde</param>
         /// <param name="objectName">Nome do objeto</param>
@@ -281,9 +292,10 @@ namespace enki.storage.Model
         /// <param name="size">Tamanho do conteúdo</param>
         /// <param name="contentType">Tipo do conteudo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
+        public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
         {
             ValidateInstance();
+			var md5Check = new CreateMD5CheckSum(data);
             var request = new PutObjectRequest
             {
                 BucketName = bucketName,
@@ -291,7 +303,15 @@ namespace enki.storage.Model
                 InputStream = data,
                 ContentType = contentType
             };
-            await _client.PutObjectAsync(request).ConfigureAwait(false);
+			request.Headers.ContentMD5 = md5Check.GetBase64Md5();
+            Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
+			
+			// Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
+			// Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
+			return new enki.storage.Model.PutObjectResponse(
+											result.HttpStatusCode == System.Net.HttpStatusCode.OK 
+											&& md5Check.Validate(result.ETag.Trim('"'))
+						);
         }
 
         /// <summary>

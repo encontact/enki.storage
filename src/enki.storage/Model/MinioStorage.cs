@@ -123,10 +123,11 @@ namespace enki.storage.Model
         /// <param name="filePath">Caminho do arquivo no servidor</param>
         /// <param name="contentType">Tipo do conteúdo do arquivo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
+        public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
         {
             ValidateInstance();
             await _minioClient.PutObjectAsync(bucketName, objectName, filePath, contentType).ConfigureAwait(false);
+			return new PutObjectResponse(true);
         }
 
         /// <summary>
@@ -138,10 +139,11 @@ namespace enki.storage.Model
         /// <param name="size">Tamanho do conteúdo</param>
         /// <param name="contentType">Tipo do conteudo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
+        public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
         {
             ValidateInstance();
             await _minioClient.PutObjectAsync(bucketName, objectName, data, size, contentType).ConfigureAwait(false);
+			return new PutObjectResponse(true);
         }
 
         /// <summary>

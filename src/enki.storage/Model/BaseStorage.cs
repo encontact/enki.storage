@@ -23,8 +23,8 @@ namespace enki.storage.Model
         public virtual Task MakeBucketAsync(string bucketName, string region) => throw new NotImplementedException();
         public virtual Task<bool> ObjectExistAsync(string bucketName, string objectName) => throw new NotImplementedException();
         public virtual Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null) => throw new NotImplementedException();
-        public virtual Task PutObjectAsync(string bucketName, string objectName, string filePath, string contentType) => throw new NotImplementedException();
-        public virtual Task PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType) => throw new NotImplementedException();
+        public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType) => throw new NotImplementedException();
+        public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType) => throw new NotImplementedException();
         public virtual Task RemoveBucketAsync(string bucketName) => throw new NotImplementedException();
         public virtual Task RemoveObjectAsync(string bucketName, string objectName) => throw new NotImplementedException();
         public virtual Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects) => throw new NotImplementedException();

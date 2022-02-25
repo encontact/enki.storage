@@ -113,8 +113,10 @@ namespace enki.storage.integration.test.TesteStorage
                 Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
-                    await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
+                    var result = await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
+					Assert.True(result.SuccessResult);
                 }
+
                 Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
                 await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
