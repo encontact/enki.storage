@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -271,8 +272,10 @@ namespace enki.storage.Model
                 FilePath = filePath,
                 ContentType = contentType,
             };
-			request.Headers.ContentMD5 = md5Check.GetMd5();
-			Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
+            var md5Hash = md5Check.GetMd5();
+			request.Headers.ContentMD5 = md5Hash;
+            request.Metadata.Add("ContentMD5", md5Hash);
+            Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
 			
 			// Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
 			// Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
@@ -304,6 +307,7 @@ namespace enki.storage.Model
                 ContentType = contentType
             };
 			request.Headers.ContentMD5 = md5Check.GetBase64Md5();
+            request.Metadata.Add("ContentMD5", md5Check.GetMd5());
             Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
 			
 			// Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
