@@ -126,7 +126,13 @@ namespace enki.storage.Model
         public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
         {
             ValidateInstance();
-            await _minioClient.PutObjectAsync(bucketName, objectName, filePath, contentType).ConfigureAwait(false);
+
+            var md5Hash = new CreateMD5CheckSum(filePath).GetMd5();
+            var metadata = new Dictionary<string, string>
+            {
+                { "contentmd5", md5Hash }
+            };
+            await _minioClient.PutObjectAsync(bucketName, objectName, filePath, contentType, metaData: metadata).ConfigureAwait(false);
 			return new PutObjectResponse(true);
         }
 
@@ -142,7 +148,14 @@ namespace enki.storage.Model
         public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
         {
             ValidateInstance();
-            await _minioClient.PutObjectAsync(bucketName, objectName, data, size, contentType).ConfigureAwait(false);
+
+            var md5Hash = new CreateMD5CheckSum(data).GetMd5();
+            data.Seek(0, SeekOrigin.Begin);
+            var metadata = new Dictionary<string, string>
+            {
+                { "contentmd5", md5Hash }
+            };
+            await _minioClient.PutObjectAsync(bucketName, objectName, data, size, contentType, metaData: metadata).ConfigureAwait(false);
 			return new PutObjectResponse(true);
         }
 
@@ -222,6 +235,20 @@ namespace enki.storage.Model
         /// <returns>Recupera as informações do objeto.</returns>
         public override async Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName)
             => new ObjectInfo(await StatObjectAsync(bucketName, objectName).ConfigureAwait(false));
+
+        /// <summary>
+        /// Recupera metadata de um objeto
+        /// </summary>
+        /// <param name="bucketName"></param>
+        /// <param name="objectName"></param>
+        /// <returns>Dicionario com o metadata do objeto</returns>
+        public override async Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName)
+        {
+            ValidateInstance();
+            var result = await StatObjectAsync(bucketName, objectName).ConfigureAwait(false);
+
+            return result.MetaData;
+        }
 
         /// <summary>
         /// Recupera todos os objetos do bucked ou a partir de um prefix de forma recursiva.

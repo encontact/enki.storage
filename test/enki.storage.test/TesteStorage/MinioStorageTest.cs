@@ -114,7 +114,7 @@ namespace enki.storage.integration.test.TesteStorage
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     var result = await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
-					Assert.True(result.SuccessResult);
+                    Assert.True(result.SuccessResult);
                 }
 
                 Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
@@ -324,7 +324,7 @@ namespace enki.storage.integration.test.TesteStorage
                 Assert.Equal(DateTime.Now.Day, data.LastModified.Day);
                 Assert.Equal(bucketObject, data.ObjectName);
                 Assert.Equal(54, data.Size);
-                Assert.Equal(1, data.MetaData.Count);
+                Assert.Equal(2, data.MetaData.Count);
                 Assert.Equal("text/plain", data.MetaData["Content-Type"]);
 
                 // Clean
@@ -620,6 +620,57 @@ namespace enki.storage.integration.test.TesteStorage
                 }
                 await client.RemoveObjectAsync(bucket, otherFolder).ConfigureAwait(false);
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task PutObjectMustHaveHashInMetadata()
+        {
+            var client = new MinioStorage(_config);
+            var bucketObject = "test/SimpleFile.txt";
+            var bucket = _config.DefaultBucket + "-getobject";
+            var filePath = "resources/SimpleResourceToAttach.txt";
+            var md5Hash = new CreateMD5CheckSum(filePath).GetMd5();
+            try
+            {
+                client.Connect();
+                if (!await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+                {
+                    await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+                }
+                if (await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+                {
+                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                }
+                long filePutSize = 0;
+                using (var stream = new MemoryStream(File.ReadAllBytes(filePath)))
+                {
+                    filePutSize = stream.Length;
+                    await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
+                }
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+
+                var result = await client.GetObjectMetadataAsync(bucket, bucketObject);
+                Assert.Equal(md5Hash, result["contentmd5"]);
+
+                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, e.Message);
+            }
+            finally
+            {
+                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false) && await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+                {
+                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                }
+                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+                {
+                    await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                }
             }
         }
 

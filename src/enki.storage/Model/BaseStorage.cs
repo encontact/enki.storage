@@ -32,6 +32,7 @@ namespace enki.storage.Model
         public virtual Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName) => throw new NotImplementedException();
         public virtual Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null) => throw new NotImplementedException();
         public virtual Task SetCorsToBucketAsync(string bucketName, string allowedOrigin) => throw new NotImplementedException();
+        public virtual Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName) => throw new NotImplementedException();
 
         /// <summary>
         /// Valida se o bucket tem um nome válido para ser utilizado.
