@@ -324,7 +324,7 @@ namespace enki.storage.integration.test.TesteStorage
                 Assert.Equal(DateTime.Now.Day, data.LastModified.Day);
                 Assert.Equal(bucketObject, data.ObjectName);
                 Assert.Equal(54, data.Size);
-                Assert.Equal(1, data.MetaData.Count);
+                Assert.Equal(2, data.MetaData.Count);
                 Assert.Equal("text/plain", data.MetaData["Content-Type"]);
 
                 // Clean
@@ -622,6 +622,7 @@ namespace enki.storage.integration.test.TesteStorage
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
             }
         }
+
         [Fact]
         public async Task PutObjectMustHaveHashInMetadata()
         {
@@ -650,7 +651,7 @@ namespace enki.storage.integration.test.TesteStorage
                 Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
 
                 var result = await client.StatObjectAsync(bucket, bucketObject);
-                Assert.Equal(md5Hash, result.MetaData.GetValueOrDefault("ContentMD5"));
+                Assert.Equal(md5Hash, result.MetaData.GetValueOrDefault("contentmd5"));
 
                 await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
@@ -659,8 +660,17 @@ namespace enki.storage.integration.test.TesteStorage
             catch (Exception e)
             {
                 Assert.False(true, e.Message);
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false) && await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+                {
+                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                }
+                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+                {
+                    await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                }
             }
         }
 

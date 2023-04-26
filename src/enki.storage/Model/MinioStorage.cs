@@ -130,7 +130,7 @@ namespace enki.storage.Model
             var md5Hash = new CreateMD5CheckSum(filePath).GetMd5();
             var metadata = new Dictionary<string, string>
             {
-                { "ContentMD5", md5Hash }
+                { "contentmd5", md5Hash }
             };
             await _minioClient.PutObjectAsync(bucketName, objectName, filePath, contentType, metaData: metadata).ConfigureAwait(false);
 			return new PutObjectResponse(true);
@@ -153,7 +153,7 @@ namespace enki.storage.Model
             data.Seek(0, SeekOrigin.Begin);
             var metadata = new Dictionary<string, string>
             {
-                { "ContentMD5", md5Hash }
+                { "contentmd5", md5Hash }
             };
             await _minioClient.PutObjectAsync(bucketName, objectName, data, size, contentType, metaData: metadata).ConfigureAwait(false);
 			return new PutObjectResponse(true);

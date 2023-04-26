@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -264,7 +263,7 @@ namespace enki.storage.Model
         public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
         {
             ValidateInstance();
-			var md5Check = new CreateMD5CheckSum(filePath);
+            var md5Check = new CreateMD5CheckSum(filePath);
             var request = new PutObjectRequest
             {
                 BucketName = bucketName,
@@ -273,16 +272,16 @@ namespace enki.storage.Model
                 ContentType = contentType,
             };
             var md5Hash = md5Check.GetMd5();
-			request.Headers.ContentMD5 = md5Hash;
+            request.Headers.ContentMD5 = md5Hash;
             request.Metadata.Add("ContentMD5", md5Hash);
             Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
-			
-			// Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
-			// Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
-			return new enki.storage.Model.PutObjectResponse(
-											result.HttpStatusCode == System.Net.HttpStatusCode.OK 
-											&& md5Check.Validate(result.ETag)
-						);
+
+            // Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
+            // Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
+            return new enki.storage.Model.PutObjectResponse(
+                                            result.HttpStatusCode == System.Net.HttpStatusCode.OK
+                                            && md5Check.Validate(result.ETag)
+                        );
         }
 
         /// <summary>
@@ -298,7 +297,7 @@ namespace enki.storage.Model
         public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
         {
             ValidateInstance();
-			var md5Check = new CreateMD5CheckSum(data);
+            var md5Check = new CreateMD5CheckSum(data);
             var request = new PutObjectRequest
             {
                 BucketName = bucketName,
@@ -306,16 +305,17 @@ namespace enki.storage.Model
                 InputStream = data,
                 ContentType = contentType
             };
-			request.Headers.ContentMD5 = md5Check.GetBase64Md5();
-            request.Metadata.Add("ContentMD5", md5Check.GetMd5());
+            request.Headers.ContentMD5 = md5Check.GetBase64Md5();
+            request.Metadata.Add("contentmd5", md5Check.GetMd5());
+
             Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
-			
-			// Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
-			// Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
-			return new enki.storage.Model.PutObjectResponse(
-											result.HttpStatusCode == System.Net.HttpStatusCode.OK 
-											&& md5Check.Validate(result.ETag.Trim('"'))
-						);
+
+            // Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
+            // Response de sucesso deve ser HTTP = 200 (Mais em: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_ResponseSyntax)
+            return new enki.storage.Model.PutObjectResponse(
+                                            result.HttpStatusCode == System.Net.HttpStatusCode.OK
+                                            && md5Check.Validate(result.ETag.Trim('"'))
+                        );
         }
 
         /// <summary>
