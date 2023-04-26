@@ -237,6 +237,20 @@ namespace enki.storage.Model
             => new ObjectInfo(await StatObjectAsync(bucketName, objectName).ConfigureAwait(false));
 
         /// <summary>
+        /// Recupera metadata de um objeto
+        /// </summary>
+        /// <param name="bucketName"></param>
+        /// <param name="objectName"></param>
+        /// <returns>Dicionario com o metadata do objeto</returns>
+        public override async Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName)
+        {
+            ValidateInstance();
+            var result = await StatObjectAsync(bucketName, objectName).ConfigureAwait(false);
+
+            return result.MetaData;
+        }
+
+        /// <summary>
         /// Recupera todos os objetos do bucked ou a partir de um prefix de forma recursiva.
         /// </summary>
         /// <param name="bucketName">Bucket name</param>

@@ -806,8 +806,8 @@ namespace enki.storage.integration.test.TesteStorage
                 }
                 Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
 
-                var result = await client.StatObjectAsync(bucket, bucketObject);
-                Assert.Equal(md5Hash, result.Metadata["contentmd5"]);
+                var result = await client.GetObjectMetadataAsync(bucket, bucketObject);
+                Assert.Equal(md5Hash, result["contentmd5"]);
 
                 await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
                 await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
@@ -829,6 +829,5 @@ namespace enki.storage.integration.test.TesteStorage
                 }
             }
         }
-
     }
 }

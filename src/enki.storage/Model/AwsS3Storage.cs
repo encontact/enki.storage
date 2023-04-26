@@ -222,6 +222,32 @@ namespace enki.storage.Model
         }
 
         /// <summary>
+        /// Recupera metadata de um objeto
+        /// </summary>
+        /// <param name="bucketName"></param>
+        /// <param name="objectName"></param>
+        /// <returns>Dicionario com o metadata do objeto</returns>
+        public override async Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName)
+        {
+            ValidateInstance();
+            var result = await _client.GetObjectAsync(bucketName, objectName).ConfigureAwait(false);
+            var metadata = new Dictionary<string, string>();
+            var awsMetadataPrefix = "x-amz-meta-";
+            foreach (var item in result.Metadata.Keys)
+            {
+                var key = item;
+                if (key.StartsWith(awsMetadataPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    key = key.Substring(awsMetadataPrefix.Length);
+                }
+
+                metadata.Add(key, result.Metadata[key]);
+            }
+
+            return metadata;
+        }
+
+        /// <summary>
         /// Efetua a criação de uma URL temporária para upload de anexo sem depender de autenticação.
         /// Util para performar os uploads tanto de anexos como de imagens no corpo efetuadas pela plataforma.
         /// </summary>
