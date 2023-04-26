@@ -3,12 +3,12 @@
   <PropertyGroup>
     <Description>Enki Storage Superset to use Minio.io and Aws S3.</Description>
     <Copyright>Enkilabs 2020</Copyright>
-    <TargetFrameworks>netstandard2.0;netcoreapp3.1;net5.0;</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.1;net6.0;</TargetFrameworks>
     <DebugType>portable</DebugType>
     <RootNamespace>enki.storage</RootNamespace>
     <PackageId>enki.storage</PackageId>
     <AssemblyName>enki.storage</AssemblyName>
-    <PackageVersion>1.0.11</PackageVersion>
+    <PackageVersion>1.0.12</PackageVersion>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>

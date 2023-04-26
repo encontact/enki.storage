@@ -1,6 +1,6 @@
 # To learn makefiles: https://makefiletutorial.com/
 # On windows, use NMake: https://docs.microsoft.com/pt-br/cpp/build/reference/nmake-reference?view=msvc-160
-dotnetFramework = net5.0
+dotnetFramework = net6.0
 packFramework = netstandard2.0
 solution = ./enki.storage.sln
 libProject = ./src/enki.storage/enki.storage.csproj
@@ -29,7 +29,7 @@ run-test:
 	dotnet test ${solution}
 
 publish:
-	dotnet publish ${libProject} -c Release -o out/Release/
+	dotnet publish ${apiProject} --runtime any -c Release -f ${dotnetFramework} --no-self-contained -o ${distPath}
 
 pack:
 	dotnet pack -c Release -o ${artifactDir} ${libProject}
