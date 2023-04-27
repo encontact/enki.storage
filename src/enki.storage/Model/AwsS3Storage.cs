@@ -230,7 +230,7 @@ namespace enki.storage.Model
         public override async Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName)
         {
             ValidateInstance();
-            var result = await _client.GetObjectAsync(bucketName, objectName).ConfigureAwait(false);
+            var result = await _client.GetObjectMetadataAsync(bucketName, objectName).ConfigureAwait(false);
             var metadata = new Dictionary<string, string>();
             var awsMetadataPrefix = "x-amz-meta-";
             foreach (var item in result.Metadata.Keys)
