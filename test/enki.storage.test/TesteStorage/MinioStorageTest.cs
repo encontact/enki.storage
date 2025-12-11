@@ -23,11 +23,11 @@ namespace enki.storage.integration.test.TesteStorage
             {
                 var client = new MinioStorage(_config);
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
@@ -39,17 +39,17 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -61,19 +61,19 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.SetCorsToBucketAsync(bucket, "*").ConfigureAwait(false);
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
+                await client.SetCorsToBucketAsync(bucket, "*");
                 Assert.True(true); // Se chegou aqui e não deu erro, está ok.
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -85,15 +85,15 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
@@ -106,27 +106,27 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
 
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     var result = await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                     Assert.True(result.SuccessResult);
                 }
 
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.Fail(e.Message);
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -139,12 +139,12 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
 
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
-                var urlToUpload = await client.PresignedPutObjectAsync(bucket, bucketObject, 60).ConfigureAwait(false);
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
+                var urlToUpload = await client.PresignedPutObjectAsync(bucket, bucketObject, 60);
 
                 var httpRequest = WebRequest.Create(urlToUpload) as HttpWebRequest;
                 httpRequest.Method = "PUT";
@@ -162,16 +162,16 @@ namespace enki.storage.integration.test.TesteStorage
                 }
                 var response = httpRequest.GetResponse() as HttpWebResponse;
                 if (response.StatusCode != HttpStatusCode.OK) Assert.True(false, "Envio HTTP não acusou sucesso.");
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.Fail(e.Message);
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -184,17 +184,17 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
                 long filePutSize = 0;
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     filePutSize = stream.Length;
                     await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
                 using (var dataStream = new MemoryStream())
                 {
                     await client.GetObjectAsync(bucket, bucketObject,
@@ -205,15 +205,15 @@ namespace enki.storage.integration.test.TesteStorage
                     );
                     Assert.Equal(filePutSize, dataStream.Length);
                 }
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.Fail(e.Message);
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -227,34 +227,34 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
                 long filePutSize = 0;
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     filePutSize = stream.Length;
                     await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
-                var urlToGetObject = await client.PresignedGetObjectAsync(bucket, bucketObject, 60).ConfigureAwait(false);
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
+                var urlToGetObject = await client.PresignedGetObjectAsync(bucket, bucketObject, 60);
                 Assert.Contains(fileName, urlToGetObject);
                 using (var clientWeb = new WebClient())
                 {
-                    var data = await clientWeb.DownloadDataTaskAsync(new Uri(urlToGetObject)).ConfigureAwait(false);
+                    var data = await clientWeb.DownloadDataTaskAsync(new Uri(urlToGetObject));
                     Assert.Equal(filePutSize, data.Length);
                 }
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
         }
 
@@ -268,27 +268,27 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
-                await client.CopyObjectAsync(bucket, bucketObject, bucket, destBucketObject).ConfigureAwait(false);
-                Assert.True(await client.ObjectExistAsync(bucket, destBucketObject).ConfigureAwait(false));
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveObjectAsync(bucket, destBucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
+                await client.CopyObjectAsync(bucket, bucketObject, bucket, destBucketObject);
+                Assert.True(await client.ObjectExistAsync(bucket, destBucketObject));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveObjectAsync(bucket, destBucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.Fail(e.Message);
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -302,18 +302,18 @@ namespace enki.storage.integration.test.TesteStorage
             {
                 // Prepare
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
 
                 // Test
-                var data = await client.GetObjectInfoAsync(bucket, bucketObject).ConfigureAwait(false);
+                var data = await client.GetObjectInfoAsync(bucket, bucketObject);
                 Assert.NotNull(data);
                 Assert.NotNull(data.ETag);
                 Assert.True(data.ETag.Count() > 10);
@@ -328,15 +328,15 @@ namespace enki.storage.integration.test.TesteStorage
                 Assert.Equal("text/plain", data.MetaData["Content-Type"]);
 
                 // Clean
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                Assert.Fail(e.Message);
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -349,27 +349,27 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
 
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -383,41 +383,41 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
 
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     for (int i = 0; i < itemQuantity; i++)
                     {
                         var bucketObject = $"test/SimpleFile{i}.txt";
-                        Assert.False(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                        Assert.False(await client.ObjectExistAsync(bucket, bucketObject));
 
                         await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
 
-                        Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                        Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
                         objectList.Add(bucketObject);
                     }
                 }
 
-                await client.RemoveObjectsAsync(bucket, objectList).ConfigureAwait(false);
+                await client.RemoveObjectsAsync(bucket, objectList);
                 foreach (var obj in objectList)
                 {
-                    Assert.False(await client.ObjectExistAsync(bucket, obj).ConfigureAwait(false));
+                    Assert.False(await client.ObjectExistAsync(bucket, obj));
                 }
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
                 foreach (var obj in objectList)
                 {
-                    await client.RemoveObjectAsync(bucket, obj).ConfigureAwait(false);
+                    await client.RemoveObjectAsync(bucket, obj);
                 }
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -437,50 +437,50 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
 
                 // Other folder
-                Assert.False(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+                Assert.False(await client.ObjectExistAsync(bucket, otherFolder));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     await client.PutObjectAsync(bucket, otherFolder, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, otherFolder));
 
                 // To delete items
                 foreach (var item in bucketObjectList)
                 {
-                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+                    Assert.False(await client.ObjectExistAsync(bucket, item));
                     using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                     {
                         await client.PutObjectAsync(bucket, item, stream, stream.Length, "text/plain");
                     }
-                    Assert.True(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+                    Assert.True(await client.ObjectExistAsync(bucket, item));
                 }
 
-                var processor = await client.RemovePrefixAsync(bucket, rootFolder, 10).ConfigureAwait(false);
+                var processor = await client.RemovePrefixAsync(bucket, rootFolder, 10);
                 processor.WaitComplete();
 
                 foreach (var item in bucketObjectList)
                 {
-                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), $"Falhou exclusao arquivo: {item}");
+                    Assert.False(await client.ObjectExistAsync(bucket, item), $"Falhou exclusao arquivo: {item}");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, otherFolder));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
                 foreach (var item in bucketObjectList)
                 {
-                    await client.RemoveObjectAsync(bucket, item).ConfigureAwait(false);
+                    await client.RemoveObjectAsync(bucket, item);
                 }
-                await client.RemoveObjectAsync(bucket, otherFolder).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveObjectAsync(bucket, otherFolder);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -500,40 +500,40 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket já existia");
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket não foi criado corretamente");
+                Assert.False(await client.BucketExistsAsync(bucket), "O bucket já existia");
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket), "O bucket não foi criado corretamente");
 
                 foreach (var item in bucketObjectList)
                 {
-                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), "O objeto já existe antes do upload");
+                    Assert.False(await client.ObjectExistAsync(bucket, item), "O objeto já existe antes do upload");
                     using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                     {
                         await client.PutObjectAsync(bucket, item, stream, stream.Length, "text/plain");
                     }
-                    Assert.True(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), "O objeto não existe apos upload");
+                    Assert.True(await client.ObjectExistAsync(bucket, item), "O objeto não existe apos upload");
                 }
 
                 // Call delete an inexistent Folder, and can´t thrown exception.
-                var processor = await client.RemovePrefixAsync(bucket, inexistentRootFolderToDelete, 10).ConfigureAwait(false);
+                var processor = await client.RemovePrefixAsync(bucket, inexistentRootFolderToDelete, 10);
                 processor.WaitComplete();
 
                 foreach (var item in bucketObjectList)
                 {
-                    Assert.True(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false), $"Falhou encontrar arquivo: {item}");
+                    Assert.True(await client.ObjectExistAsync(bucket, item), $"Falhou encontrar arquivo: {item}");
                 }
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
                 foreach (var item in bucketObjectList)
                 {
-                    await client.RemoveObjectAsync(bucket, item).ConfigureAwait(false);
+                    await client.RemoveObjectAsync(bucket, item);
                 }
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -546,21 +546,21 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket já existia");
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false), "O bucket não foi criado corretamente");
+                Assert.False(await client.BucketExistsAsync(bucket), "O bucket já existia");
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket), "O bucket não foi criado corretamente");
 
                 // Call delete an inexistent Folder, and can´t thrown exception.
-                var processor = await client.RemovePrefixAsync(bucket, inexistentRootFolderToDelete, 10).ConfigureAwait(false);
+                var processor = await client.RemovePrefixAsync(bucket, inexistentRootFolderToDelete, 10);
                 processor.WaitComplete();
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -580,46 +580,46 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
-                await client.MakeBucketAsync(bucket).ConfigureAwait(false);
-                Assert.True(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                Assert.False(await client.BucketExistsAsync(bucket));
+                await client.MakeBucketAsync(bucket);
+                Assert.True(await client.BucketExistsAsync(bucket));
 
                 // Other folder
-                Assert.False(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+                Assert.False(await client.ObjectExistAsync(bucket, otherFolder));
                 using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                 {
                     await client.PutObjectAsync(bucket, otherFolder, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, otherFolder).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, otherFolder));
 
                 // To delete items
                 foreach (var item in bucketObjectList)
                 {
-                    Assert.False(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+                    Assert.False(await client.ObjectExistAsync(bucket, item));
                     using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
                     {
                         await client.PutObjectAsync(bucket, item, stream, stream.Length, "text/plain");
                     }
-                    Assert.True(await client.ObjectExistAsync(bucket, item).ConfigureAwait(false));
+                    Assert.True(await client.ObjectExistAsync(bucket, item));
                 }
 
                 // List items
-                var items = await client.ListObjectsAsync(bucket).ConfigureAwait(false);
+                var items = await client.ListObjectsAsync(bucket);
                 var expectedTotal = bucketObjectList.Count() + 1;
                 Assert.Equal(expectedTotal, items.Count());
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
                 foreach (var item in bucketObjectList)
                 {
-                    await client.RemoveObjectAsync(bucket, item).ConfigureAwait(false);
+                    await client.RemoveObjectAsync(bucket, item);
                 }
-                await client.RemoveObjectAsync(bucket, otherFolder).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                await client.RemoveObjectAsync(bucket, otherFolder);
+                await client.RemoveBucketAsync(bucket);
             }
         }
 
@@ -634,13 +634,13 @@ namespace enki.storage.integration.test.TesteStorage
             try
             {
                 client.Connect();
-                if (!await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+                if (!await client.BucketExistsAsync(bucket))
                 {
-                    await client.MakeBucketAsync(bucket).ConfigureAwait(false);
+                    await client.MakeBucketAsync(bucket);
                 }
-                if (await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+                if (await client.ObjectExistAsync(bucket, bucketObject))
                 {
-                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                    await client.RemoveObjectAsync(bucket, bucketObject);
                 }
                 long filePutSize = 0;
                 using (var stream = new MemoryStream(File.ReadAllBytes(filePath)))
@@ -648,28 +648,28 @@ namespace enki.storage.integration.test.TesteStorage
                     filePutSize = stream.Length;
                     await client.PutObjectAsync(bucket, bucketObject, stream, stream.Length, "text/plain");
                 }
-                Assert.True(await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false));
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
 
                 var result = await client.GetObjectMetadataAsync(bucket, bucketObject);
                 Assert.Equal(md5Hash, result["contentmd5"]);
 
-                await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
-                await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
-                Assert.False(await client.BucketExistsAsync(bucket).ConfigureAwait(false));
+                await client.RemoveObjectAsync(bucket, bucketObject);
+                await client.RemoveBucketAsync(bucket);
+                Assert.False(await client.BucketExistsAsync(bucket));
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
             finally
             {
-                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false) && await client.ObjectExistAsync(bucket, bucketObject).ConfigureAwait(false))
+                if (await client.BucketExistsAsync(bucket) && await client.ObjectExistAsync(bucket, bucketObject))
                 {
-                    await client.RemoveObjectAsync(bucket, bucketObject).ConfigureAwait(false);
+                    await client.RemoveObjectAsync(bucket, bucketObject);
                 }
-                if (await client.BucketExistsAsync(bucket).ConfigureAwait(false))
+                if (await client.BucketExistsAsync(bucket))
                 {
-                    await client.RemoveBucketAsync(bucket).ConfigureAwait(false);
+                    await client.RemoveBucketAsync(bucket);
                 }
             }
         }
