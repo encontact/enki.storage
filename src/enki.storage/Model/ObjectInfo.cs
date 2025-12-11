@@ -1,8 +1,9 @@
-using System;
-using System.Collections.Generic;
 using Amazon.S3.Model;
 using enki.storage.Interface;
 using Minio.DataModel;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace enki.storage.Model
 {
@@ -49,18 +50,32 @@ namespace enki.storage.Model
         {
             ObjectName = objectName;
             Size = stat.ContentLength;
-            LastModified = stat.LastModified;
+            LastModified = stat.LastModified ?? DateTime.MinValue;
             ETag = stat.ETag;
             MetaData = stat.ResponseMetadata.Metadata;
-            Expires = stat.Expires == DateTime.MinValue ? DateTime.MaxValue : stat.Expires;
+
+            if (!string.IsNullOrEmpty(stat.ExpiresString) &&
+                DateTime.TryParse(
+                    stat.ExpiresString,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                    out var expiresParsed))
+            {
+                Expires = expiresParsed;
+            }
+            else
+            {
+                Expires = DateTime.MaxValue;
+            }
+
             ContentType = stat.Headers.ContentType;
         }
 
         public ObjectInfo(S3Object item)
         {
             ObjectName = item.Key;
-            Size = item.Size;
-            LastModified = item.LastModified;
+            Size = item.Size ?? 0 ;
+            LastModified = item.LastModified ?? DateTime.MinValue;
             ETag = item.ETag;
             MetaData = new Dictionary<string, string>();
             ContentType = "application/octet-stream";

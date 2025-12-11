@@ -5,7 +5,7 @@
         string EndPoint { get; }
         string AccessKey { get; }
         string SecretKey { get; }
-        string Region { get; }
+        string Region { get; set; }
         bool Secure { get; }
         string DefaultBucket { get; }
 

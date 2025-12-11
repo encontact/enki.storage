@@ -1,6 +1,8 @@
 ﻿using enki.storage.Interface;
 using Minio;
 using Minio.DataModel;
+using Minio.DataModel.Args;
+using Minio.DataModel.Result;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +15,7 @@ namespace enki.storage.Model
 {
     public class MinioStorage : BaseStorage
     {
-        private MinioClient _minioClient;
+        private IMinioClient _minioClient;
         public bool UseRegion => ServerConfig.MustConnectToRegion();
 
         public MinioStorage(IStorageServerConfig config) : base(config) { }
@@ -30,7 +32,7 @@ namespace enki.storage.Model
             // Issue relatando caso: https://github.com/minio/minio-js/issues/619
             // Notar que exemplo de connect no GitHub do Minio.DotNet não inclui region no construtor, mas apresenta nas chamadas de bucket.
             // Devido a estes pontos, não é efetuada a verificação MustConnectToRegion() da interface de configuração.
-            _minioClient = new MinioClient(ServerConfig.EndPoint, ServerConfig.AccessKey, ServerConfig.SecretKey);
+            _minioClient = new MinioClient().WithEndpoint(ServerConfig.EndPoint).WithCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey).Build();
         }
 
         /// <summary>
@@ -41,18 +43,8 @@ namespace enki.storage.Model
         public override async Task<bool> BucketExistsAsync(string bucketName)
         {
             ValidateInstance();
-            return await _minioClient.BucketExistsAsync(bucketName).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Valida se um balde existe de forma assincrona.
-        /// </summary>
-        /// <param name="bucketName">Nome da carteira a ser pesquisada.</param>
-        /// <returns>Tarefa indicando sucesso ou falha ao terminar.</returns>
-        public bool BucketExists(string bucketName)
-        {
-            ValidateInstance();
-            return _minioClient.BucketExistsAsync(bucketName).Result;
+            var args = new BucketExistsArgs().WithBucket(bucketName);
+            return await _minioClient.BucketExistsAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -64,11 +56,16 @@ namespace enki.storage.Model
             ValidateInstance();
             if (UseRegion)
             {
-                await _minioClient.MakeBucketAsync(bucketName, ServerConfig.Region).ConfigureAwait(false);
+                var argsWithRegions = new MakeBucketArgs()
+                    .WithBucket(bucketName)
+                    .WithLocation(ServerConfig.Region);
+
+                await _minioClient.MakeBucketAsync(argsWithRegions).ConfigureAwait(false);
                 return;
             }
 
-            await _minioClient.MakeBucketAsync(bucketName).ConfigureAwait(false);
+            var args = new MakeBucketArgs().WithBucket(bucketName);
+            await _minioClient.MakeBucketAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -78,7 +75,10 @@ namespace enki.storage.Model
         public override async Task MakeBucketAsync(string bucketName, string region)
         {
             ValidateInstance();
-            await _minioClient.MakeBucketAsync(bucketName, ServerConfig.Region).ConfigureAwait(false);
+            var args = new MakeBucketArgs()
+                .WithBucket(bucketName)
+                .WithLocation(region);
+            await _minioClient.MakeBucketAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -98,7 +98,8 @@ namespace enki.storage.Model
         public override async Task RemoveBucketAsync(string bucketName)
         {
             ValidateInstance();
-            await _minioClient.RemoveBucketAsync(bucketName).ConfigureAwait(false);
+            var args = new RemoveBucketArgs().WithBucket(bucketName);
+            await _minioClient.RemoveBucketAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -112,7 +113,11 @@ namespace enki.storage.Model
         public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null)
         {
             ValidateInstance();
-            return await _minioClient.PresignedPutObjectAsync(bucketName, objectName, expiresInt).ConfigureAwait(false);
+            var args = new PresignedPutObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithExpiry(expiresInt);
+            return await _minioClient.PresignedPutObjectAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -132,8 +137,15 @@ namespace enki.storage.Model
             {
                 { "contentmd5", md5Hash }
             };
-            await _minioClient.PutObjectAsync(bucketName, objectName, filePath, contentType, metaData: metadata).ConfigureAwait(false);
-			return new PutObjectResponse(true);
+            var args = new PutObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithFileName(filePath)
+                .WithContentType(contentType)
+                .WithHeaders(metadata);
+
+            await _minioClient.PutObjectAsync(args).ConfigureAwait(false);
+            return new PutObjectResponse(true);
         }
 
         /// <summary>
@@ -155,8 +167,16 @@ namespace enki.storage.Model
             {
                 { "contentmd5", md5Hash }
             };
-            await _minioClient.PutObjectAsync(bucketName, objectName, data, size, contentType, metaData: metadata).ConfigureAwait(false);
-			return new PutObjectResponse(true);
+            var args = new PutObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithStreamData(data)
+                .WithObjectSize(size)
+                .WithContentType(contentType)
+                .WithHeaders(metadata);
+
+            await _minioClient.PutObjectAsync(args).ConfigureAwait(false);
+            return new PutObjectResponse(true);
         }
 
         /// <summary>
@@ -168,61 +188,83 @@ namespace enki.storage.Model
         public override async Task RemoveObjectAsync(string bucketName, string objectName)
         {
             ValidateInstance();
-            await _minioClient.RemoveObjectAsync(bucketName, objectName).ConfigureAwait(false);
+            var args = new RemoveObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName);
+            await _minioClient.RemoveObjectAsync(args).ConfigureAwait(false);
         }
 
         public override async Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects)
         {
             foreach (var objectName in objects)
             {
-                await _minioClient.RemoveObjectAsync(bucketName, objectName).ConfigureAwait(false);
+                var args = new RemoveObjectArgs()
+                    .WithBucket(bucketName)
+                    .WithObject(objectName);
+                await _minioClient.RemoveObjectAsync(args).ConfigureAwait(false);
             }
         }
 
-        public override async Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default)
+        public override async Task<BatchDeleteProcessor> RemovePrefixAsync(
+            string bucketName,
+            string prefix,
+            int chunkSize,
+            CancellationToken cancellationToken = default)
         {
             ValidateInstance();
 
             var processor = new BatchDeleteProcessor(async (IEnumerable<string> keys) =>
             {
-                var finishedDelete = false;
-                var observableDelete = await _minioClient.RemoveObjectAsync(bucketName, keys, cancellationToken).ConfigureAwait(false);
-                // Remove list of objects in objectNames from the bucket bucketName.
-                observableDelete.Subscribe(
-                    deleteError => Console.WriteLine("Object: {0}", deleteError.Key),
-                    ex => Console.WriteLine("OnError: {0}", ex),
-                    () => finishedDelete = true
-                );
+                // Monta os argumentos para remoção em lote
+                var removeArgs = new RemoveObjectsArgs()
+                    .WithBucket(bucketName)
+                    .WithObjects(keys.ToList());
 
-                while (!finishedDelete)
-                    await Task.Delay(250);
+                var deleteErrors = await _minioClient
+                    .RemoveObjectsAsync(removeArgs, cancellationToken)
+                    .ConfigureAwait(false);
+
+                foreach (var deleteError in deleteErrors)
+                {
+                    Console.WriteLine("Delete error for object: {0}", deleteError.Key);
+                }
             });
 
             var bucketKeys = new List<string>();
-            var finishedList = false;
-            var prefixToFilter = (prefix.EndsWith("/") ? prefix : prefix + "/");
-            var observable = _minioClient.ListObjectsAsync(bucketName, prefixToFilter, true, cancellationToken);
-            observable.Subscribe
-            (
-                item =>
+            var prefixToFilter = prefix.EndsWith("/") ? prefix : prefix + "/";
+
+            var listArgs = new ListObjectsArgs()
+                .WithBucket(bucketName)
+                .WithPrefix(prefixToFilter)
+                .WithRecursive(true);
+
+            var asyncEnumerable = _minioClient.ListObjectsEnumAsync(listArgs, cancellationToken);
+            var enumerator = asyncEnumerable.GetAsyncEnumerator(cancellationToken);
+
+            try
+            {
+                while (await enumerator.MoveNextAsync().ConfigureAwait(false))
                 {
+                    var item = enumerator.Current;
+
                     bucketKeys.Add(item.Key);
+
                     if (bucketKeys.Count >= chunkSize)
                     {
                         processor.EnqueueChunk(bucketKeys);
                         bucketKeys = new List<string>();
                     }
-                },
-                () =>
-                {
-                    if (bucketKeys.Any())
-                        processor.EnqueueChunk(bucketKeys);
-
-                    finishedList = true;
                 }
-            );
+            }
+            finally
+            {
+                await enumerator.DisposeAsync().ConfigureAwait(false);
+            }
 
-            while (!finishedList) await Task.Delay(100);
+            if (bucketKeys.Any())
+            {
+                processor.EnqueueChunk(bucketKeys);
+            }
 
             return processor;
         }
@@ -259,25 +301,30 @@ namespace enki.storage.Model
         public override async Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null)
         {
             ValidateInstance();
-            var finishedList = false;
+
             var result = new List<IObjectInfo>();
 
-            var items = _minioClient.ListObjectsAsync(bucketName, prefix, true);
-            items.Subscribe
-            (
-                item =>
+            var args = new ListObjectsArgs()
+                .WithBucket(bucketName)
+                .WithRecursive(true);
+
+            var asyncEnumerable = _minioClient.ListObjectsEnumAsync(args);
+            var enumerator = asyncEnumerable.GetAsyncEnumerator();
+
+            try
+            {
+                while (await enumerator.MoveNextAsync().ConfigureAwait(false))
                 {
+                    var item = enumerator.Current;
+
                     if (!item.IsDir)
                         result.Add(new ObjectInfo(item));
-                },
-                () =>
-                {
-                    finishedList = true;
                 }
-            );
-
-            while (!finishedList)
-                await Task.Delay(100);
+            }
+            finally
+            {
+                await enumerator.DisposeAsync().ConfigureAwait(false);
+            }
 
             return result;
         }
@@ -292,7 +339,10 @@ namespace enki.storage.Model
         public async Task<ObjectStat> StatObjectAsync(string bucketName, string objectName)
         {
             ValidateInstance();
-            return await _minioClient.StatObjectAsync(bucketName, objectName).ConfigureAwait(false);
+            var args = new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName);
+            return await _minioClient.StatObjectAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -306,7 +356,10 @@ namespace enki.storage.Model
             ValidateInstance();
             try
             {
-                await _minioClient.StatObjectAsync(bucketName, objectName).ConfigureAwait(false);
+                var args = new StatObjectArgs()
+                    .WithBucket(bucketName)
+                    .WithObject(objectName);
+                await _minioClient.StatObjectAsync(args).ConfigureAwait(false);
                 return true;
             }
             catch (Exception)
@@ -324,7 +377,11 @@ namespace enki.storage.Model
         public override async Task GetObjectAsync(string bucketName, string objectName, Action<Stream> action)
         {
             ValidateInstance();
-            await _minioClient.GetObjectAsync(bucketName, objectName, action).ConfigureAwait(false);
+            var args = new GetObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithCallbackStream(action);
+            await _minioClient.GetObjectAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -338,7 +395,16 @@ namespace enki.storage.Model
         public override async Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName)
         {
             ValidateInstance();
-            await _minioClient.CopyObjectAsync(bucketName, objectName, destBucketName, destObjectName).ConfigureAwait(false);
+            var copySourceArgs = new CopySourceObjectArgs()
+               .WithBucket(bucketName)
+               .WithObject(objectName);
+
+            var copyObjectArgs = new CopyObjectArgs()
+               .WithBucket(destBucketName)
+               .WithObject(destObjectName)
+               .WithCopyObjectSource(copySourceArgs);
+
+            await _minioClient.CopyObjectAsync(copyObjectArgs).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -352,7 +418,11 @@ namespace enki.storage.Model
         public override async Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null)
         {
             ValidateInstance();
-            return await _minioClient.PresignedGetObjectAsync(bucketName, objectName, expiresInt, reqParams).ConfigureAwait(false);
+            var args = new PresignedGetObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithExpiry(expiresInt);
+            return await _minioClient.PresignedGetObjectAsync(args).ConfigureAwait(false);
         }
 
         /// <summary>

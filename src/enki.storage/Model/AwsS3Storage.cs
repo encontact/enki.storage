@@ -2,11 +2,13 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Util;
 using enki.storage.Interface;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,12 +34,6 @@ namespace enki.storage.Model
             if (_client != null) return;
             var credentials = new BasicAWSCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey);
 
-            // OBS: Essa configuração é feita pois por padrão, exclusivamente quando a região utilizada é a 
-            //      us-east-1, utiliza a assinatura "version 2", com isso as "Presigned URLs" geradas não
-            //      são formadas com todos parâmetros e acaba gerando erro 403 ao fazer upload pelo browser. 
-            //      Mais informações através do comentário na propriedade 'AWSConfigsS3.UseSignatureVersion4'.
-            AWSConfigsS3.UseSignatureVersion4 = true;
-
             // TODO: Ação para permitir que haja ações Inter-Regiões:
             // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
             if (ServerConfig.MustConnectToRegion())
@@ -55,32 +51,9 @@ namespace enki.storage.Model
         {
             ValidateInstance();
 
-            /*
-            NOTA: Esse código corresponde ao método "DoesS3BucketExistV2Async" que substitui o
-                  método obsoleto "DoesS3BucketExistAsync". Porém, até o dia  dessa alteração 
-                  não tinha sido liberado o pacote nuget contendo essa melhoria, então replicamos o código aqui. 
-                  Obs: Futuramente passar a utilizar o método 'DoesS3BucketExistV2Async'.
-            */
-            try
-            {
-                await _client.GetACLAsync(bucketName).ConfigureAwait(false);
-            }
-            catch (AmazonS3Exception e)
-            {
-                switch (e.ErrorCode)
-                {
-                    // A redirect error or a forbidden error means the bucket exists.
-                    case "AccessDenied":
-                    case "PermanentRedirect":
-                        return true;
-                    case "NoSuchBucket":
-                        return false;
-                    default:
-                        throw;
-                }
-            }
-
-            return true;
+            return await AmazonS3Util
+                .DoesS3BucketExistV2Async(_client, bucketName)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -203,6 +176,10 @@ namespace enki.storage.Model
                 Prefix = prefix,
             };
             var resultS3List = await _client.ListObjectsV2Async(request).ConfigureAwait(false);
+
+            if (resultS3List.S3Objects is null)
+                return result;
+
             result = resultS3List.S3Objects.Select(o => (IObjectInfo)new ObjectInfo(o)).ToList();
 
             return result;
@@ -397,11 +374,11 @@ namespace enki.storage.Model
             do
             {
                 response = await _client.ListObjectsV2Async(request);
-                if (!response.S3Objects.Any()) continue;
+                if (response.S3Objects is null || !response.S3Objects.Any()) continue;
 
                 processor.EnqueueChunk(response.S3Objects.Select(o => o.Key));
                 request.ContinuationToken = response.NextContinuationToken;
-            } while (response.IsTruncated);
+            } while (response.IsTruncated ?? false);
 
             return processor;
         }
@@ -441,19 +418,24 @@ namespace enki.storage.Model
         /// <returns>True se existe e False se não existe.</returns>
         public override async Task<bool> ObjectExistAsync(string bucketName, string objectName)
         {
-            var request = new ListObjectsV2Request
+            var request = new GetObjectMetadataRequest
             {
                 BucketName = bucketName,
-                Prefix = objectName,
-                MaxKeys = 1
+                Key = objectName
             };
 
-            var response = await _client.ListObjectsV2Async(request).ConfigureAwait(false);
-
-            if (response.S3Objects.Count == 0)
+            try
+            {
+                await _client.GetObjectMetadataAsync(request).ConfigureAwait(false);
+                return true;
+            }
+            catch (AmazonS3Exception ex) when (
+                ex.StatusCode == HttpStatusCode.NotFound ||
+                string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ex.ErrorCode, "NotFound", StringComparison.OrdinalIgnoreCase))
+            {
                 return false;
-
-            return true;
+            }
         }
 
         /// <summary>
