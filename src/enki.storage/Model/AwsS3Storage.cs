@@ -17,7 +17,11 @@ namespace enki.storage.Model
     public class AwsS3Storage : BaseStorage
     {
         private IAmazonS3 _client { get; set; }
-        public static bool IsAmazonS3Config(IStorageServerConfig config) => config.EndPoint.ToUpper().Trim() == "S3.AMAZONAWS.COM";
+        public static bool IsAmazonS3Config(IStorageServerConfig config) => 
+            config.EndPoint.ToUpper().Trim() == "S3.AMAZONAWS.COM"  // Endpoint Padrão AWS
+            || config.EndPoint.ToUpper().Trim().EndsWith(":4566") // LocalStack porta padrão
+        ;
+
         public bool IsAmazonS3Config() => IsAmazonS3Config(ServerConfig);
         public bool UseRegion => !string.IsNullOrWhiteSpace(ServerConfig.Region);
 
