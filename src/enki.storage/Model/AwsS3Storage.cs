@@ -36,14 +36,17 @@ namespace enki.storage.Model
         public override void Connect()
         {
             if (_client != null) return;
-            var credentials = new BasicAWSCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey);
+            // var credentials = new BasicAWSCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey);
+            var config = new AmazonS3Config
+            {
+                ForcePathStyle = true,
+                // TODO: Ação para permitir que haja ações Inter-Regiões:
+                // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
+                RegionEndpoint = ServerConfig.MustConnectToRegion() ? RegionEndpoint.GetBySystemName(ServerConfig.Region) : null,
+            };
 
-            // TODO: Ação para permitir que haja ações Inter-Regiões:
-            // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
-            if (ServerConfig.MustConnectToRegion())
-                _client = new AmazonS3Client(credentials, RegionEndpoint.GetBySystemName(ServerConfig.Region));
-            else
-                _client = new AmazonS3Client(credentials);
+            config.ServiceURL = ServerConfig.EndPoint;
+            _client = new AmazonS3Client(ServerConfig.AccessKey, ServerConfig.SecretKey, config);
         }
 
         /// <summary>
