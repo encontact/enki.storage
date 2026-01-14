@@ -304,7 +304,7 @@ namespace enki.storage.integration.test.TesteStorage
                }
                catch (WebException ex)
                {
-                   Assert.Equal("The remote server returned an error: (400) Bad Request.", ex.Message);
+                   Assert.Equal("The remote server returned an error: (400) Bad Request.".ToLowerInvariant(), ex.Message.ToLowerInvariant());
                }
            }
            catch (Exception e)

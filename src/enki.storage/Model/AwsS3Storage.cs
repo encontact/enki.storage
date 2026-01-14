@@ -43,6 +43,7 @@ namespace enki.storage.Model
                 // TODO: Ação para permitir que haja ações Inter-Regiões:
                 // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
                 RegionEndpoint = ServerConfig.MustConnectToRegion() ? RegionEndpoint.GetBySystemName(ServerConfig.Region) : null,
+                UseHttp = !ServerConfig.Secure,
             };
 
             config.ServiceURL = ServerConfig.EndPoint;
@@ -251,7 +252,8 @@ namespace enki.storage.Model
                     BucketName = bucketName,
                     Key = objectName,
                     Verb = HttpVerb.PUT,
-                    Expires = DateTime.UtcNow.AddSeconds(expiresInt)
+                    Expires = DateTime.UtcNow.AddSeconds(expiresInt),
+                    Protocol = ServerConfig.Secure ? Protocol.HTTPS : Protocol.HTTP
                 };
 
                 if (!string.IsNullOrWhiteSpace(contentMD5))
@@ -491,7 +493,8 @@ namespace enki.storage.Model
                     BucketName = bucketName,
                     Key = objectName,
                     Verb = HttpVerb.GET,
-                    Expires = DateTime.UtcNow.AddSeconds(expiresInt)
+                    Expires = DateTime.UtcNow.AddSeconds(expiresInt),
+                    Protocol = ServerConfig.Secure ? Protocol.HTTPS : Protocol.HTTP
                 };
                 if (reqParams != null)
                 {
