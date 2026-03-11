@@ -1,0 +1,20 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/solution-items/">
+    <File Path=".gitignore" />
+    <File Path=".docker-compose.yml" />
+    <File Path="global.json" />
+    <File Path="Makefile" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/enki.storage/enki.storage.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/enki.storage.test/enki.storage.integration.test.csproj" />
+  </Folder>
+</Solution>
