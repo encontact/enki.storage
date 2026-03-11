@@ -1,0 +1,54 @@
+services:
+  # storage-minio:
+  #   # Foi fixada a versão pois ao utilizar a latest e baixar uma versão mais recente, o minio parou de funcionar. Ticket criado para analisar o problema: #1380
+  #   image: "minio/minio:RELEASE.2021-02-24T18-44-45Z"
+  #   restart: always
+  #   networks:
+  #     - backend
+  #   ports:
+  #     - "9000:9000"
+  #   volumes:
+  #     - ./db-files/minio/data:/mnt/data
+  #   environment:
+  #     MINIO_ACCESS_KEY: enkiminiodev
+  #     MINIO_SECRET_KEY: secretminiodevelopmentenvironment2018
+  #   command: server /mnt/data
+  storage-minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: always
+    networks:
+      - backend
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: "enkiminiodev"
+      MINIO_ROOT_PASSWORD: "secretminiodevelopmentenvironment2018"
+  #   volumes:
+  #     - ./db-files/minio/data:/data
+    command: ["server", "--console-address", ":9001", "/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  s3:
+    image: localstack/localstack:latest
+    container_name: localstack-main
+    ports:
+      - "4566:4566" # Default port for all services in newer versions
+      - "4510-4559:4510-4559" # Older port range, still useful for compatibility
+    environment:
+      - SERVICES=s3 # Specify only S3, or leave blank for all services
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Required for some internal operations
+      # Optional: persist data locally
+      # - ./localstack-data:/var/lib/localstack
+
+networks:
+  backend:

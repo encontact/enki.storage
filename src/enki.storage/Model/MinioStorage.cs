@@ -453,5 +453,39 @@ namespace enki.storage.Model
             if (_minioClient == null)
                 throw new ObjectDisposedException("Não foi efetuada conexão com o servidor. Utilize a função Connect() antes de chamar as ações.");
         }
+
+        // O SDK do minio já lida com o multipart upload internamente.
+        public override async Task<PutObjectResponse> MultipartUploadAsync(
+            string bucketName,
+            string objectName,
+            Stream data,
+            string contentType,
+            int partSize = 5 * 1024 * 1024,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ValidateInstance();
+
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
+            if (data.CanSeek)
+                data.Seek(0, SeekOrigin.Begin);
+
+            var args = new PutObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName)
+                .WithStreamData(data)
+                .WithContentType(contentType);
+
+            if (data.CanSeek)
+                args = args.WithObjectSize(data.Length);
+
+            await _minioClient
+                .PutObjectAsync(args, cancellationToken)
+                .ConfigureAwait(false);
+
+            return new PutObjectResponse(true);
+        }
     }
 }

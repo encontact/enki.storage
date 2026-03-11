@@ -1,11 +1,11 @@
-﻿using enki.storage.Interface;
-using enki.storage.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using enki.storage.Interface;
+using enki.storage.Model;
 using Xunit;
 
 namespace enki.storage.integration.test.TesteStorage
@@ -674,5 +674,42 @@ namespace enki.storage.integration.test.TesteStorage
             }
         }
 
+        [Fact]
+        public async Task MultipartUploadAsync()
+        {
+            var client = new MinioStorage(_config);
+            var bucketObject = "test/SimpleFile.txt";
+            var bucket = _config.DefaultBucket + "-putobject";
+            try
+            {
+                client.Connect();
+
+                await client.MakeBucketAsync(bucket);
+
+                using (var stream = new MemoryStream(File.ReadAllBytes("resources/SimpleResourceToAttach.txt")))
+                {
+                    var result = await client.MultipartUploadAsync(bucket, bucketObject, stream, "text/plain");
+
+                    Assert.True(result.SuccessResult);
+                }
+
+                Assert.True(await client.ObjectExistAsync(bucket, bucketObject));
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+            finally
+            {
+                if (await client.ObjectExistAsync(bucket, bucketObject))
+                {
+                    await client.RemoveObjectAsync(bucket, bucketObject);
+                }
+                if (await client.BucketExistsAsync(bucket))
+                {
+                    await client.RemoveBucketAsync(bucket);
+                }
+            }
+        }
     }
 }

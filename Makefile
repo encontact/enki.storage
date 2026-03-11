@@ -2,7 +2,7 @@
 # On windows, use NMake: https://docs.microsoft.com/pt-br/cpp/build/reference/nmake-reference?view=msvc-160
 dotnetFramework = net10.0
 packFramework = netstandard2.0
-solution = ./enki.storage.sln
+solution = ./enki.storage.slnx
 libProject = ./src/enki.storage/enki.storage.csproj
 nuspec = ./enki.storage.nuspec
 distPath = ./dist
