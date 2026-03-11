@@ -30,5 +30,13 @@ namespace enki.storage.Interface
         Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName);
         Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null);
         Task SetCorsToBucketAsync(string bucketName, string allowedOrigin);
+        Task<PutObjectResponse> MultipartUploadAsync(
+            string bucketName,
+            string objectName,
+            Stream data,
+            string contentType,
+            int partSize = 5 * 1024 * 1024,
+            CancellationToken cancellationToken = default
+        );
     }
 }

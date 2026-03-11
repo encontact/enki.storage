@@ -17,7 +17,7 @@ namespace enki.storage.Model
     public class AwsS3Storage : BaseStorage
     {
         private IAmazonS3 _client { get; set; }
-        public static bool IsAmazonS3Config(IStorageServerConfig config) => 
+        public static bool IsAmazonS3Config(IStorageServerConfig config) =>
             config.EndPoint.ToUpper().Trim() == "S3.AMAZONAWS.COM"  // Endpoint Padrão AWS
             || config.EndPoint.ToUpper().Trim().EndsWith(":4566") // LocalStack porta padrão
         ;
@@ -514,6 +514,89 @@ namespace enki.storage.Model
         {
             if (_client == null)
                 throw new ObjectDisposedException("Não foi efetuada conexão com o servidor. Utilize a função Connect() antes de chamar as ações.");
+        }
+
+        public override async Task<PutObjectResponse> MultipartUploadAsync(
+            string bucketName,
+            string objectName,
+            Stream data,
+            string contentType,
+            int partSize = 5 * 1024 * 1024,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ValidateInstance();
+
+            var initiateRequest = new InitiateMultipartUploadRequest
+            {
+                BucketName = bucketName,
+                Key = objectName,
+                ContentType = contentType
+            };
+
+            var initiateResponse = await _client
+                .InitiateMultipartUploadAsync(initiateRequest, cancellationToken);
+
+            var uploadId = initiateResponse.UploadId;
+
+            var partETags = new List<PartETag>();
+            var buffer = new byte[partSize];
+
+            int partNumber = 1;
+
+            try
+            {
+                while (true)
+                {
+                    int bytesRead = await data.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+
+                    if (bytesRead == 0)
+                        break;
+
+                    var partStream = new MemoryStream(buffer, 0, bytesRead);
+
+                    var uploadRequest = new UploadPartRequest
+                    {
+                        BucketName = bucketName,
+                        Key = objectName,
+                        UploadId = uploadId,
+                        PartNumber = partNumber,
+                        PartSize = bytesRead,
+                        InputStream = partStream
+                    };
+
+                    var uploadResponse = await _client
+                        .UploadPartAsync(uploadRequest, cancellationToken);
+
+                    partETags.Add(new PartETag(partNumber, uploadResponse.ETag));
+
+                    partNumber++;
+                }
+
+                var completeRequest = new CompleteMultipartUploadRequest
+                {
+                    BucketName = bucketName,
+                    Key = objectName,
+                    UploadId = uploadId,
+                    PartETags = partETags
+                };
+
+                var completeResponse = await _client
+                    .CompleteMultipartUploadAsync(completeRequest, cancellationToken);
+
+                return new PutObjectResponse(completeResponse.HttpStatusCode == HttpStatusCode.OK);
+            }
+            catch
+            {
+                await _client.AbortMultipartUploadAsync(new AbortMultipartUploadRequest
+                {
+                    BucketName = bucketName,
+                    Key = objectName,
+                    UploadId = uploadId
+                }, cancellationToken);
+
+                throw;
+            }
         }
     }
 }
