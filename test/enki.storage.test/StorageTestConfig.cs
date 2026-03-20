@@ -1,9 +1,10 @@
-﻿using enki.storage.Interface;
+﻿using System;
+using enki.storage.integration.test.Infrastructure.Containers;
+using enki.storage.Interface;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using System;
 
-namespace enki.storage.integration.test.TesteStorage
+namespace enki.storage.integration.test
 {
     public enum StorageType
     {
@@ -41,6 +42,34 @@ namespace enki.storage.integration.test.TesteStorage
                 Secure = Convert.ToBoolean(config["Minio:Secure"]),
                 DefaultBucket = config["Minio:DefaultBucket"],
                 Region = forceRegion ?? config["Minio:Region"]
+            };
+        }
+
+        public static IStorageServerConfig CreateMinio(MinioContainerFixture fixture)
+        {
+            var uri = new Uri(fixture.Endpoint);
+
+            return new StorageConfigTest
+            {
+                EndPoint = $"{uri.Host}:{uri.Port}", // O minio espera o endpoint sem o (http/https)
+                AccessKey = fixture.AccessKey,
+                SecretKey = fixture.SecretKey,
+                Secure = false,
+                DefaultBucket = "test-bucket",
+                Region = null
+            };
+        }
+
+        public static IStorageServerConfig CreateS3(LocalStackContainerFixture fixture)
+        {
+            return new StorageConfigTest
+            {
+                EndPoint = fixture.Endpoint,
+                AccessKey = fixture.AccessKey,
+                SecretKey = fixture.SecretKey,
+                Secure = false,
+                DefaultBucket = "test-bucket",
+                Region = fixture.Region
             };
         }
 

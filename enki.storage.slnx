@@ -6,7 +6,6 @@
   </Configurations>
   <Folder Name="/solution-items/">
     <File Path=".gitignore" />
-    <File Path=".docker-compose.yml" />
     <File Path="global.json" />
     <File Path="Makefile" />
     <File Path="README.md" />
