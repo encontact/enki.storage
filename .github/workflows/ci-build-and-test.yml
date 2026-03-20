@@ -1,0 +1,46 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Validar "up-to-date" em PR
+      - name: Ensure branch is up-to-date with main
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+          git checkout ${{ github.head_ref }}
+          if [ $(git rev-list --left-only --count origin/main...HEAD) -ne 0 ]; then
+            echo "Your branch is not up-to-date with main. Please merge/rebase main first."
+            exit 1
+          fi
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal --configuration Release
+        
