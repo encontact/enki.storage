@@ -4,16 +4,22 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using enki.storage.integration.test.Infrastructure.Containers;
 using enki.storage.Interface;
 using enki.storage.Model;
 using Xunit;
 
 namespace enki.storage.integration.test.TesteStorage
 {
+    [Collection("Minio collection")]
     public class MinioStorageTest
     {
-        private IStorageServerConfig _config { get; set; }
-        public MinioStorageTest() => _config = StorageTestConfig.GetAppsettingsConfig(StorageType.Minio);
+        private readonly IStorageServerConfig _config;
+
+        public MinioStorageTest(MinioContainerFixture fixture)
+        {
+            _config = StorageTestConfig.CreateMinio(fixture);
+        }
 
         [Fact]
         public async Task NotFoundBucketExistsAsyncTest()

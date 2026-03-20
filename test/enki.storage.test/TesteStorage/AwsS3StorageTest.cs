@@ -6,21 +6,21 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using enki.storage.integration.test.Infrastructure.Containers;
 using enki.storage.Interface;
 using enki.storage.Model;
 using Xunit;
 
 namespace enki.storage.integration.test.TesteStorage
 {
+    [Collection("LocalStack collection")]
     public class AwsS3StorageTest
     {
-        private IStorageServerConfig _config { get; set; }
-        private IStorageServerConfig _configWithoutRegion { get; set; }
-        public AwsS3StorageTest()
+        private readonly IStorageServerConfig _config;
+
+        public AwsS3StorageTest(LocalStackContainerFixture fixture)
         {
-            _config = StorageTestConfig.GetAppsettingsConfig(StorageType.S3);
-            // Força configuração sem região.
-            _configWithoutRegion = StorageTestConfig.GetAppsettingsConfig(StorageType.S3, "");
+            _config = StorageTestConfig.CreateS3(fixture);
         }
 
         [Fact]
@@ -481,10 +481,25 @@ namespace enki.storage.integration.test.TesteStorage
             var destBucketObject = "test/SimpleCopiedFile.txt";
             var destBucket = "oregon-copy-object";
 
-            var originConfig = StorageTestConfig.GetAppsettingsConfig(StorageType.S3);
-            originConfig.Region = originRegion;
-            var destConfig = StorageTestConfig.GetAppsettingsConfig(StorageType.S3);
-            destConfig.Region = destRegion;
+            var originConfig = new StorageConfigTest()
+            {
+                EndPoint = _config.EndPoint,
+                AccessKey = _config.AccessKey,
+                SecretKey = _config.SecretKey,
+                Secure = _config.Secure,
+                DefaultBucket = _config.DefaultBucket,
+                Region = originRegion,
+            };
+
+            var destConfig = new StorageConfigTest()
+            {
+                EndPoint = _config.EndPoint,
+                AccessKey = _config.AccessKey,
+                SecretKey = _config.SecretKey,
+                Secure = _config.Secure,
+                DefaultBucket = _config.DefaultBucket,
+                Region = destRegion,
+            }; ;
 
             var originClient = new AwsS3Storage(originConfig);
             var destClient = new AwsS3Storage(destConfig);
