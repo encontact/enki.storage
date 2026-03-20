@@ -18,7 +18,7 @@ namespace enki.storage.Model
     {
         private IAmazonS3 _client { get; set; }
         public static bool IsAmazonS3Config(IStorageServerConfig config) =>
-            config.EndPoint.ToUpper().Trim() == "S3.AMAZONAWS.COM"  // Endpoint Padrão AWS
+            config.EndPoint.ToUpper().Trim().Contains("S3.AMAZONAWS.COM")  // Endpoint Padrão AWS
             || config.EndPoint.ToUpper().Trim().EndsWith(":4566") // LocalStack porta padrão
         ;
 
