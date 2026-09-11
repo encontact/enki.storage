@@ -3,6 +3,7 @@ using Minio;
 using Minio.DataModel;
 using Minio.DataModel.Args;
 using Minio.DataModel.Result;
+using Minio.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -364,9 +365,16 @@ namespace enki.storage.Model
             }
             catch (Exception)
             {
+                // Mantido abrangente: chamadores existentes dependem de receber False para
+                // qualquer falha, inclusive nome de objeto inválido.
                 return false;
             }
         }
+
+        /// <inheritdoc />
+        public override bool IsObjectNotFound(Exception exception) =>
+            exception is ObjectNotFoundException
+            || exception is BucketNotFoundException;
 
         /// <summary>
         /// Recupera um objeto do balde.

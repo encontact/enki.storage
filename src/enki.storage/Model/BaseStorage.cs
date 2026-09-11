@@ -16,6 +16,10 @@ namespace enki.storage.Model
 
         public virtual Task<bool> BucketExistsAsync(string bucketName) => throw new NotImplementedException();
         public virtual void Connect() => throw new NotImplementedException();
+        // Diverge dos vizinhos de propósito: este método é avaliado dentro de um filtro de
+        // exceção, e o CLR engole o que for lançado ali tratando o filtro como falso. Retornar
+        // False explicitamente é o mesmo comportamento, sem esconder o motivo.
+        public virtual bool IsObjectNotFound(Exception exception) => false;
         public virtual Task GetObjectAsync(string bucketName, string objectName, Action<Stream> action) => throw new NotImplementedException();
         public virtual Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName) => throw new NotImplementedException();
         public virtual Task<IEnumerable<IObjectInfo>> ListObjectsAsync(string bucketName, string prefix = null) => throw new NotImplementedException();

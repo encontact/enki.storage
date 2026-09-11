@@ -12,6 +12,15 @@ namespace enki.storage.Interface
         IStorageServerConfig ServerConfig { get; }
 
         void Connect();
+
+        /// <summary>
+        /// Indica se a exceção representa "objeto não encontrado" no provider concreto.
+        /// Existe para que o consumidor possa tratar ausência sem conhecer as exceções
+        /// específicas de S3 ou Minio.
+        /// </summary>
+        /// <param name="exception">Exceção lançada por uma operação de leitura.</param>
+        /// <returns>True se for ausência do objeto, False para qualquer outra falha.</returns>
+        bool IsObjectNotFound(Exception exception);
         Task<bool> BucketExistsAsync(string bucketName);
         Task MakeBucketAsync(string bucketName);
         Task MakeBucketAsync(string bucketName, string region);

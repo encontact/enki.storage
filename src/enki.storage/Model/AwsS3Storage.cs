@@ -1,8 +1,8 @@
-﻿using Amazon;
-using Amazon.Runtime;
+﻿using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
+using Amazon.Util;
 using enki.storage.Interface;
 using System;
 using System.Collections.Generic;
@@ -37,16 +37,23 @@ namespace enki.storage.Model
         {
             if (_client != null) return;
             // var credentials = new BasicAWSCredentials(ServerConfig.AccessKey, ServerConfig.SecretKey);
+            // TODO: Ação para permitir que haja ações Inter-Regiões:
+            // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
             var config = new AmazonS3Config
             {
                 ForcePathStyle = true,
-                // TODO: Ação para permitir que haja ações Inter-Regiões:
-                // https://stackoverflow.com/questions/50289688/s3-copyobjectrequest-between-regions
-                RegionEndpoint = ServerConfig.MustConnectToRegion() ? RegionEndpoint.GetBySystemName(ServerConfig.Region) : null,
                 UseHttp = !ServerConfig.Secure,
+                ServiceURL = ServerConfig.EndPoint,
             };
 
-            config.ServiceURL = ServerConfig.EndPoint;
+            // Sem região no cliente, o SDK a infere por expressão regular sobre o ServiceURL a cada
+            // operação. AuthenticationRegion informa a região de assinatura de uma vez e, ao
+            // contrário de RegionEndpoint, não limpa o ServiceURL.
+            var region = ServerConfig.MustConnectToRegion()
+                ? ServerConfig.Region
+                : AWSSDKUtils.DetermineRegion(ServerConfig.EndPoint);
+            if (!string.IsNullOrWhiteSpace(region)) config.AuthenticationRegion = region;
+
             _client = new AmazonS3Client(ServerConfig.AccessKey, ServerConfig.SecretKey, config);
         }
 
@@ -438,14 +445,18 @@ namespace enki.storage.Model
                 await _client.GetObjectMetadataAsync(request).ConfigureAwait(false);
                 return true;
             }
-            catch (AmazonS3Exception ex) when (
-                ex.StatusCode == HttpStatusCode.NotFound ||
-                string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(ex.ErrorCode, "NotFound", StringComparison.OrdinalIgnoreCase))
+            catch (Exception ex) when (IsObjectNotFound(ex))
             {
                 return false;
             }
         }
+
+        /// <inheritdoc />
+        public override bool IsObjectNotFound(Exception exception) =>
+            exception is AmazonS3Exception ex && (
+                ex.StatusCode == HttpStatusCode.NotFound ||
+                string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ex.ErrorCode, "NotFound", StringComparison.OrdinalIgnoreCase));
 
         /// <summary>
         /// Recupera um objeto do balde.
