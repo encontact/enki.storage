@@ -279,7 +279,7 @@ namespace enki.storage.Model
         /// <param name="filePath">Caminho do arquivo no servidor</param>
         /// <param name="contentType">Tipo do conteúdo do arquivo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
+        public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType, IDictionary<string, string> metadata = null)
         {
             ValidateInstance();
             var md5Check = new CreateMD5CheckSum(filePath);
@@ -292,7 +292,10 @@ namespace enki.storage.Model
             };
             var md5Hash = md5Check.GetMd5();
             request.Headers.ContentMD5 = md5Hash;
-            request.Metadata.Add("ContentMD5", md5Hash);
+
+            foreach (var item in BuildMetadata(md5Hash, metadata))
+                request.Metadata.Add(item.Key, item.Value);
+
             Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
 
             // Fazendo um DoubleCheck no MD5, informamos no Header pra AWS checar e efetuamos a validação no retorno também.
@@ -313,7 +316,7 @@ namespace enki.storage.Model
         /// <param name="size">Tamanho do conteúdo</param>
         /// <param name="contentType">Tipo do conteudo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
+        public override async Task<enki.storage.Model.PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType, IDictionary<string, string> metadata = null)
         {
             ValidateInstance();
             var md5Check = new CreateMD5CheckSum(data);
@@ -325,7 +328,9 @@ namespace enki.storage.Model
                 ContentType = contentType
             };
             request.Headers.ContentMD5 = md5Check.GetBase64Md5();
-            request.Metadata.Add("contentmd5", md5Check.GetMd5());
+
+            foreach (var item in BuildMetadata(md5Check.GetMd5(), metadata))
+                request.Metadata.Add(item.Key, item.Value);
 
             Amazon.S3.Model.PutObjectResponse result = await _client.PutObjectAsync(request).ConfigureAwait(false);
 
@@ -532,6 +537,7 @@ namespace enki.storage.Model
             string objectName,
             Stream data,
             string contentType,
+            IDictionary<string, string> metadata = null,
             int partSize = 5 * 1024 * 1024,
             CancellationToken cancellationToken = default
         )
@@ -545,6 +551,9 @@ namespace enki.storage.Model
                 ContentType = contentType
             };
 
+            foreach (var item in BuildMetadata(null, metadata))
+                initiateRequest.Metadata.Add(item.Key, item.Value);
+                
             var initiateResponse = await _client
                 .InitiateMultipartUploadAsync(initiateRequest, cancellationToken);
 

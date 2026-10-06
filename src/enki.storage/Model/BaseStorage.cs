@@ -27,8 +27,8 @@ namespace enki.storage.Model
         public virtual Task MakeBucketAsync(string bucketName, string region) => throw new NotImplementedException();
         public virtual Task<bool> ObjectExistAsync(string bucketName, string objectName) => throw new NotImplementedException();
         public virtual Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null) => throw new NotImplementedException();
-        public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType) => throw new NotImplementedException();
-        public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType) => throw new NotImplementedException();
+        public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType, IDictionary<string, string> metadata = null) => throw new NotImplementedException();
+        public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType, IDictionary<string, string> metadata = null) => throw new NotImplementedException();
         public virtual Task RemoveBucketAsync(string bucketName) => throw new NotImplementedException();
         public virtual Task RemoveObjectAsync(string bucketName, string objectName) => throw new NotImplementedException();
         public virtual Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects) => throw new NotImplementedException();
@@ -42,9 +42,34 @@ namespace enki.storage.Model
             string objectName,
             Stream data,
             string contentType,
+            IDictionary<string, string> metadata = null,
             int partSize = 5242880,
             CancellationToken cancellationToken = default
         ) => throw new NotImplementedException();
+
+        /// <summary>
+        /// Monta o dicionário de metadados do objeto somando o checksum calculado no upload aos
+        /// metadados informados pelo chamador. Entradas vazias são descartadas e o checksum tem a
+        /// palavra final, para que um metadado do chamador não possa invalidar a verificação.
+        /// </summary>
+        protected static Dictionary<string, string> BuildMetadata(string contentMd5, IDictionary<string, string> metadata)
+        {
+            var result = new Dictionary<string, string>();
+
+            if (metadata != null)
+            {
+                foreach (var item in metadata)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Key) || item.Value == null) continue;
+                    result[item.Key] = item.Value;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(contentMd5))
+                result["contentmd5"] = contentMd5;
+
+            return result;
+        }
 
         /// <summary>
         /// Valida se o bucket tem um nome válido para ser utilizado.

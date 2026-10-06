@@ -25,8 +25,8 @@ namespace enki.storage.Interface
         Task MakeBucketAsync(string bucketName);
         Task MakeBucketAsync(string bucketName, string region);
         Task RemoveBucketAsync(string bucketName);
-        Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType);
-        Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType);
+        Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType, IDictionary<string, string> metadata = null);
+        Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType, IDictionary<string, string> metadata = null);
         Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null);
         Task RemoveObjectAsync(string bucketName, string objectName);
         Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects);
@@ -44,6 +44,7 @@ namespace enki.storage.Interface
             string objectName,
             Stream data,
             string contentType,
+            IDictionary<string, string> metadata = null,
             int partSize = 5 * 1024 * 1024,
             CancellationToken cancellationToken = default
         );

@@ -129,21 +129,18 @@ namespace enki.storage.Model
         /// <param name="filePath">Caminho do arquivo no servidor</param>
         /// <param name="contentType">Tipo do conteúdo do arquivo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType)
+        public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType, IDictionary<string, string> metadata = null)
         {
             ValidateInstance();
 
             var md5Hash = new CreateMD5CheckSum(filePath).GetMd5();
-            var metadata = new Dictionary<string, string>
-            {
-                { "contentmd5", md5Hash }
-            };
+            var headers = BuildMetadata(md5Hash, metadata);
             var args = new PutObjectArgs()
                 .WithBucket(bucketName)
                 .WithObject(objectName)
                 .WithFileName(filePath)
                 .WithContentType(contentType)
-                .WithHeaders(metadata);
+                .WithHeaders(headers);
 
             await _minioClient.PutObjectAsync(args).ConfigureAwait(false);
             return new PutObjectResponse(true);
@@ -158,23 +155,20 @@ namespace enki.storage.Model
         /// <param name="size">Tamanho do conteúdo</param>
         /// <param name="contentType">Tipo do conteudo</param>
         /// <returns>Tarefa em execução.</returns>
-        public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType)
+        public override async Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType, IDictionary<string, string> metadata = null)
         {
             ValidateInstance();
 
             var md5Hash = new CreateMD5CheckSum(data).GetMd5();
             data.Seek(0, SeekOrigin.Begin);
-            var metadata = new Dictionary<string, string>
-            {
-                { "contentmd5", md5Hash }
-            };
+            var headers = BuildMetadata(md5Hash, metadata);
             var args = new PutObjectArgs()
                 .WithBucket(bucketName)
                 .WithObject(objectName)
                 .WithStreamData(data)
                 .WithObjectSize(size)
                 .WithContentType(contentType)
-                .WithHeaders(metadata);
+                .WithHeaders(headers);
 
             await _minioClient.PutObjectAsync(args).ConfigureAwait(false);
             return new PutObjectResponse(true);
@@ -468,6 +462,7 @@ namespace enki.storage.Model
             string objectName,
             Stream data,
             string contentType,
+            IDictionary<string, string> metadata = null,
             int partSize = 5 * 1024 * 1024,
             CancellationToken cancellationToken = default
         )
@@ -485,6 +480,11 @@ namespace enki.storage.Model
                 .WithObject(objectName)
                 .WithStreamData(data)
                 .WithContentType(contentType);
+
+            // Diferente do PutObjectAsync, aqui não há MD5 pré-calculado: o stream pode não ser
+            // seekable e lê-lo duas vezes anularia o ganho do multipart.
+            if (metadata != null && metadata.Count > 0)
+                args = args.WithHeaders(BuildMetadata(null, metadata));
 
             if (data.CanSeek)
                 args = args.WithObjectSize(data.Length);
