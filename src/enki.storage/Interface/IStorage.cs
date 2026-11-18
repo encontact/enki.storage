@@ -27,7 +27,11 @@ namespace enki.storage.Interface
         Task RemoveBucketAsync(string bucketName);
         Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType, IDictionary<string, string> metadata = null);
         Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType, IDictionary<string, string> metadata = null);
-        Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null);
+        /// <param name="useAccelerateEndpoint">
+        /// True gera a URL no endpoint do S3 Transfer Acceleration ({bucket}.s3-accelerate.amazonaws.com).
+        /// Só a URL muda: as demais operações seguem no endpoint configurado. Ignorado no Minio.
+        /// </param>
+        Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null, bool useAccelerateEndpoint = false);
         Task RemoveObjectAsync(string bucketName, string objectName);
         Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects);
         Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default);
@@ -37,7 +41,8 @@ namespace enki.storage.Interface
         Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName);
         Task<IObjectInfo> GetObjectInfoAsync(string bucketName, string objectName);
         Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName);
-        Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null);
+        /// <param name="useAccelerateEndpoint">Ver <see cref="PresignedPutObjectAsync"/>.</param>
+        Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null, bool useAccelerateEndpoint = false);
         Task SetCorsToBucketAsync(string bucketName, string allowedOrigin);
         Task<PutObjectResponse> MultipartUploadAsync(
             string bucketName,
