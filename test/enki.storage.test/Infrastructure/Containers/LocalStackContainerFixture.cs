@@ -15,7 +15,8 @@ namespace enki.storage.integration.test.Infrastructure.Containers
 
         public LocalStackContainerFixture()
         {
-            container = new LocalStackBuilder("localstack/localstack:latest")
+            // Fixada: as versões novas (:latest) exigem licença (LOCALSTACK_AUTH_TOKEN) e não sobem sem ela.
+            container = new LocalStackBuilder("localstack/localstack:4.9")
                 .WithPortBinding("4566")
                 .WithEnvironment("SERVICES", "s3")
                 .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
