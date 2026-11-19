@@ -50,6 +50,22 @@ namespace enki.storage.integration.test.TesteStorage
         }
 
         [Theory]
+        [InlineData("http://localhost:8333")]
+        [InlineData("http://127.0.0.1:8333")]
+        public void Get_ShouldReturnAwsS3Storage_WhenEndpointIsSeaweedFs(string endpoint)
+        {
+            // Arrange
+            var config = CreateConfigFromEndpoint(endpoint);
+            var factory = new StorageFactory(config);
+
+            // Act
+            var storage = factory.Get();
+
+            // Assert
+            Assert.IsType<AwsS3Storage>(storage);
+        }
+
+        [Theory]
         [InlineData("https://minio.local")]
         [InlineData("http://localhost:9000")]
         [InlineData("https://amazon.com")]

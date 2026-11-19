@@ -20,6 +20,7 @@ namespace enki.storage.Model
         public static bool IsAmazonS3Config(IStorageServerConfig config) =>
             config.EndPoint.ToUpper().Trim().Contains("S3.AMAZONAWS.COM")  // Endpoint Padrão AWS
             || config.EndPoint.ToUpper().Trim().Contains(":4566") // LocalStack porta padrão
+            || config.EndPoint.ToUpper().Trim().Contains(":8333") // SeaweedFS porta padrão do gateway S3
         ;
 
         public bool IsAmazonS3Config() => IsAmazonS3Config(ServerConfig);

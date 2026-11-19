@@ -73,6 +73,19 @@ namespace enki.storage.integration.test
             };
         }
 
+        public static IStorageServerConfig CreateSeaweedFs(SeaweedFsContainerFixture fixture)
+        {
+            return new StorageConfigTest
+            {
+                EndPoint = fixture.Endpoint,
+                AccessKey = fixture.AccessKey,
+                SecretKey = fixture.SecretKey,
+                Secure = false,
+                DefaultBucket = "test-bucket",
+                Region = fixture.Region
+            };
+        }
+
         public static IStorageServerConfig GetAppsettingsConfig(StorageType type)
             => GetAppsettingsConfig(type, null);
     }
