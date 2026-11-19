@@ -111,7 +111,7 @@ namespace enki.storage.Model
         /// <param name="objectName">Nome/Caminho do objeto a ser inserido.</param>
         /// <param name="expiresInt">Tempo em segundos no qual a url será valida para o Upload.</param>
         /// <returns></returns>
-        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null)
+        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null, bool useAccelerateEndpoint = false)
         {
             ValidateInstance();
             var args = new PresignedPutObjectArgs()
@@ -417,7 +417,7 @@ namespace enki.storage.Model
         /// <param name="expiresInt">Tempo de expiração em segundos.</param>
         /// <param name="reqParams">Parametros adicionais do Header a serem utilizados. Suporta os Headers: response-expires, response-content-type, response-cache-control, response-content-disposition</param>
         /// <returns>Url para obtenção do arquivo.</returns>
-        public override async Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null)
+        public override async Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null, bool useAccelerateEndpoint = false)
         {
             ValidateInstance();
             var args = new PresignedGetObjectArgs()

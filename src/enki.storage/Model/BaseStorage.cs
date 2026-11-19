@@ -26,7 +26,7 @@ namespace enki.storage.Model
         public virtual Task MakeBucketAsync(string bucketName) => throw new NotImplementedException();
         public virtual Task MakeBucketAsync(string bucketName, string region) => throw new NotImplementedException();
         public virtual Task<bool> ObjectExistAsync(string bucketName, string objectName) => throw new NotImplementedException();
-        public virtual Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null) => throw new NotImplementedException();
+        public virtual Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null, bool useAccelerateEndpoint = false) => throw new NotImplementedException();
         public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, string filePath, string contentType, IDictionary<string, string> metadata = null) => throw new NotImplementedException();
         public virtual Task<PutObjectResponse> PutObjectAsync(string bucketName, string objectName, Stream data, long size, string contentType, IDictionary<string, string> metadata = null) => throw new NotImplementedException();
         public virtual Task RemoveBucketAsync(string bucketName) => throw new NotImplementedException();
@@ -34,7 +34,7 @@ namespace enki.storage.Model
         public virtual Task RemoveObjectsAsync(string bucketName, IEnumerable<string> objects) => throw new NotImplementedException();
         public virtual Task<BatchDeleteProcessor> RemovePrefixAsync(string bucketName, string prefix, int chunkSize, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public virtual Task CopyObjectAsync(string bucketName, string objectName, string destBucketName, string destObjectName) => throw new NotImplementedException();
-        public virtual Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null) => throw new NotImplementedException();
+        public virtual Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null, bool useAccelerateEndpoint = false) => throw new NotImplementedException();
         public virtual Task SetCorsToBucketAsync(string bucketName, string allowedOrigin) => throw new NotImplementedException();
         public virtual Task<IDictionary<string, string>> GetObjectMetadataAsync(string bucketName, string objectName) => throw new NotImplementedException();
         public virtual Task<PutObjectResponse> MultipartUploadAsync(

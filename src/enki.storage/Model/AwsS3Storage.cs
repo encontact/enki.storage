@@ -20,6 +20,7 @@ namespace enki.storage.Model
         public static bool IsAmazonS3Config(IStorageServerConfig config) =>
             config.EndPoint.ToUpper().Trim().Contains("S3.AMAZONAWS.COM")  // Endpoint Padrão AWS
             || config.EndPoint.ToUpper().Trim().Contains(":4566") // LocalStack porta padrão
+            || config.EndPoint.ToUpper().Trim().Contains(":8333") // SeaweedFS porta padrão do gateway S3
         ;
 
         public bool IsAmazonS3Config() => IsAmazonS3Config(ServerConfig);
@@ -49,12 +50,39 @@ namespace enki.storage.Model
             // Sem região no cliente, o SDK a infere por expressão regular sobre o ServiceURL a cada
             // operação. AuthenticationRegion informa a região de assinatura de uma vez e, ao
             // contrário de RegionEndpoint, não limpa o ServiceURL.
-            var region = ServerConfig.MustConnectToRegion()
-                ? ServerConfig.Region
-                : AWSSDKUtils.DetermineRegion(ServerConfig.EndPoint);
+            var region = GetSigningRegion();
             if (!string.IsNullOrWhiteSpace(region)) config.AuthenticationRegion = region;
 
             _client = new AmazonS3Client(ServerConfig.AccessKey, ServerConfig.SecretKey, config);
+        }
+
+        private string GetSigningRegion() => ServerConfig.MustConnectToRegion()
+            ? ServerConfig.Region
+            : AWSSDKUtils.DetermineRegion(ServerConfig.EndPoint);
+
+        private IAmazonS3 _acceleratedClient;
+
+        /// <summary>
+        /// Cliente usado só para assinar URL no endpoint do S3 Transfer Acceleration. Fica separado
+        /// porque o acelerado exige o bucket no domínio (o cliente principal usa ForcePathStyle) e
+        /// porque as operações do servidor não devem passar por ele: cobram por GB e não ganham nada.
+        /// Assinar não acessa a rede.
+        /// </summary>
+        private IAmazonS3 GetPresignClient(bool useAccelerateEndpoint)
+        {
+            if (!useAccelerateEndpoint) return _client;
+            if (_acceleratedClient != null) return _acceleratedClient;
+
+            var region = GetSigningRegion();
+            var config = new AmazonS3Config
+            {
+                UseAccelerateEndpoint = true,
+                ForcePathStyle = false,
+                UseHttp = !ServerConfig.Secure,
+                RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(string.IsNullOrWhiteSpace(region) ? "us-east-1" : region),
+            };
+            _acceleratedClient = new AmazonS3Client(ServerConfig.AccessKey, ServerConfig.SecretKey, config);
+            return _acceleratedClient;
         }
 
         /// <summary>
@@ -248,7 +276,7 @@ namespace enki.storage.Model
         /// <param name="expiresInt">Tempo em segundos no qual a url será valida para o Upload.</param>
         /// <param name="contentMD5">Hash MD5 para validação do arquivo que será feito o upload.</param>
         /// <returns></returns>
-        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null)
+        public override async Task<string> PresignedPutObjectAsync(string bucketName, string objectName, int expiresInt, string contentMD5 = null, bool useAccelerateEndpoint = false)
         {
             ValidateInstance();
 
@@ -266,7 +294,7 @@ namespace enki.storage.Model
                 if (!string.IsNullOrWhiteSpace(contentMD5))
                     request.Headers.ContentMD5 = contentMD5;
 
-                return _client.GetPreSignedURL(request);
+                return GetPresignClient(useAccelerateEndpoint).GetPreSignedURL(request);
             }).ConfigureAwait(false);
         }
 
@@ -498,7 +526,7 @@ namespace enki.storage.Model
         /// <param name="expiresInt">Tempo de expiração em segundos.</param>
         /// <param name="reqParams">Parametros adicionais do Header a serem utilizados. Suporta os Headers: response-expires, response-content-type, response-cache-control, response-content-disposition</param>
         /// <returns>Url para obtenção do arquivo.</returns>
-        public override async Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null)
+        public override async Task<string> PresignedGetObjectAsync(string bucketName, string objectName, int expiresInt, Dictionary<string, string> reqParams = null, bool useAccelerateEndpoint = false)
         {
             ValidateInstance();
 
@@ -519,7 +547,7 @@ namespace enki.storage.Model
                     if (reqParams.ContainsKey("response-cache-control")) request.ResponseHeaderOverrides.CacheControl = reqParams["response-cache-control"];
                     if (reqParams.ContainsKey("response-content-disposition")) request.ResponseHeaderOverrides.ContentDisposition = reqParams["response-content-disposition"];
                 }
-                return _client.GetPreSignedURL(request);
+                return GetPresignClient(useAccelerateEndpoint).GetPreSignedURL(request);
             }).ConfigureAwait(false);
         }
 

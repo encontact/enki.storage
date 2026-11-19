@@ -14,7 +14,9 @@ namespace enki.storage.integration.test.Infrastructure.Containers
 
         public MinioContainerFixture()
         {
-            container = new MinioBuilder("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
+            // A MinIO Inc. tirou as imagens do Docker Hub e do quay.io (set/2026). A Chainguard é a única
+            // origem pública e sem login; só publica :latest. Mesma imagem do encontact.app (TestContainerTuning).
+            container = new MinioBuilder("cgr.dev/chainguard/minio:latest")
                 .WithReuse(true)
                 .Build();
         }
